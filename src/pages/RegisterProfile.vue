@@ -32,7 +32,7 @@
           />
 
           <q-input
-            v-model="form.birthdate"
+            v-model="form.birth_date"
             label="Fecha de nacimiento"
             type="date"
             outlined
@@ -87,15 +87,13 @@
 <script setup>
 import { ref } from 'vue'
 import axios from 'axios'
-import { useRouter } from 'vue-router'
 
-const router = useRouter()
 const loading = ref(false)
 
 const form = ref({
   name: '',
   email: '',
-  birthdate: '',
+  birth_date: '',
   gender: '',
   instagram: ''
 })
@@ -104,7 +102,7 @@ const submit = async () => {
   if (
     !form.value.name ||
     !form.value.email ||
-    !form.value.birthdate ||
+    !form.value.birth_date ||
     !form.value.gender
   ) {
     alert('Completa todos los campos obligatorios')
@@ -124,7 +122,7 @@ const submit = async () => {
       }
     )
 
-    router.replace('/home')
+    window.location.replace('/')
 
   } catch {
     alert('Error al guardar perfil')

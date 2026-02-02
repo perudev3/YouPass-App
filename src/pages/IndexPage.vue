@@ -73,6 +73,9 @@ import { useRouter } from 'vue-router'
 const router = useRouter()
 const slide = ref(0)
 
+
+
+
 const featuredEvents = ref([
   {
     id: 1,

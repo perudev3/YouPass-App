@@ -19,7 +19,23 @@ const routes = [
       {
         path: '/register-profile',
         component: () => import('pages/RegisterProfile.vue')
+      },
+      {
+        path: '/my-tickets',
+        name: 'my-tickets',
+        component: () => import('pages/MyTickets.vue')
+      },
+      {
+        path: '/ticket',
+        name: 'ticket-detail',
+        component: () => import('pages/TicketDetail.vue')
+      },
+      {
+        path: '/scan-ticket',
+        component: () => import('pages/ScanTicket.vue'),
+        meta: { requiresAuth: true }
       }
+
     ]
   },
   {

@@ -54,8 +54,10 @@ import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
 
+
 const route = useRoute()
 const router = useRouter()
+
 
 const phone = route.query.phone
 const otp = ref('')
@@ -93,13 +95,17 @@ const verify = async () => {
     // Guardar token
     if (res.data.token) {
       localStorage.setItem('token', res.data.token)
+
+      // 🔥 AVISAR A TODA LA APP
+      window.dispatchEvent(new Event('auth-changed'))
     }
+
 
     // Usuario nuevo → completar perfil
     if (res.data.needs_profile) {
       router.push('/register-profile')
     } else {
-      router.push('/')
+      window.location.replace('/')
     }
 
   } catch {

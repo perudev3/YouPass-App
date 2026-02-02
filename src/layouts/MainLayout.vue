@@ -20,15 +20,15 @@
 
 
     <!-- DRAWER -->
-    <q-drawer
-      v-model="leftDrawerOpen"
-      side="left"
-      overlay
-      bordered
-      class="drawer"
-    >
-      <div class="drawer-header">
-        <div class="drawer-logo">YouPass</div>
+    <q-drawer v-model="leftDrawerOpen" side="left" bordered class="drawer">
+
+      <!-- PERFIL -->
+      <div v-if="isAuthenticated" class="drawer-header row items-center q-gutter-sm">
+        <q-icon :name="profileIcon" size="32px" />
+        <div class="column">
+          <span class="text-weight-bold">{{ user.name }}</span>
+          <span class="text-caption">Mi perfil</span>
+        </div>
       </div>
 
       <q-list padding>
@@ -40,45 +40,67 @@
           <q-item-section>Inicio</q-item-section>
         </q-item>
 
-        <q-item clickable>
-          <q-item-section avatar>
-            <q-icon name="event" />
-          </q-item-section>
-          <q-item-section>Eventos</q-item-section>
-        </q-item>
-
-        <q-item clickable>
+        <q-item clickable to="/entrada-general">
           <q-item-section avatar>
             <q-icon name="confirmation_number" />
           </q-item-section>
-          <q-item-section>Mis entradas</q-item-section>
+          <q-item-section>Compra Entrada General</q-item-section>
         </q-item>
 
-        <q-item clickable>
+        <q-item clickable to="/entrada-vip">
           <q-item-section avatar>
-            <q-icon name="local_offer" />
+            <q-icon name="stars" />
           </q-item-section>
-          <q-item-section>Promociones</q-item-section>
+          <q-item-section>Compra Entrada VIP</q-item-section>
+        </q-item>
+
+        <q-item clickable to="/modo-fiesta">
+          <q-item-section avatar>
+            <q-icon name="celebration" />
+          </q-item-section>
+          <q-item-section>Modo Fiesta</q-item-section>
         </q-item>
 
         <q-separator spaced />
 
-        <q-item clickable>
+        <q-item clickable to="/configuracion">
           <q-item-section avatar>
-            <q-icon name="help_outline" />
+            <q-icon name="settings" />
           </q-item-section>
-          <q-item-section>Ayuda</q-item-section>
+          <q-item-section>Configuración</q-item-section>
         </q-item>
 
-        <q-item clickable to="/login-phone">
+        <!-- LOGIN / LOGOUT -->
+        <q-item
+          v-if="!loadingAuth && !isAuthenticated"
+          clickable
+          to="/login-phone"
+        >
           <q-item-section avatar>
             <q-icon name="login" />
           </q-item-section>
           <q-item-section>Iniciar sesión</q-item-section>
         </q-item>
 
+        <q-item
+          v-if="!loadingAuth && isAuthenticated"
+          clickable
+          @click="logout"
+        >
+          <q-item-section avatar>
+            <q-icon name="logout" />
+          </q-item-section>
+          <q-item-section>Salir</q-item-section>
+        </q-item>
       </q-list>
+
+      <!-- LOGO ABAJO -->
+      <div class="q-pa-md text-center">
+        <img src="/logo-youpass.svg" width="120" />
+      </div>
+
     </q-drawer>
+
 
     <!-- PÁGINAS -->
     <q-page-container>
@@ -89,9 +111,67 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed, onMounted,onUnmounted, watch} from 'vue'
+import axios from 'axios'
 
 const leftDrawerOpen = ref(false)
+const user = ref(null)
+const loadingAuth = ref(true)
+
+const token = ref(localStorage.getItem('token'))
+
+const loadUser = async () => {
+  if (!token.value) {
+    user.value = null
+    loadingAuth.value = false
+    return
+  }
+
+  try {
+    axios.defaults.headers.common.Authorization = `Bearer ${token.value}`
+    const res = await axios.get('http://127.0.0.1:8000/api/auth/me')
+    user.value = res.data
+  } catch (error) {
+    localStorage.removeItem('token')
+    console.log(error)
+    token.value = null
+    user.value = null
+  } finally {
+    loadingAuth.value = false
+  }
+}
+
+watch(token, () => {
+  loadUser()
+})
+
+const isAuthenticated = computed(() => {
+  return !!user.value
+})
+
+const profileIcon = computed(() => {
+  if (!user.value?.gender) return 'account_circle'
+
+  switch (user.value.gender) {
+    case 'Hombre':
+      return 'male'
+    case 'Mujer':
+      return 'female'
+    default:
+      return 'person'
+  }
+})
+
+onMounted(() => {
+  loadUser()
+
+  window.addEventListener('auth-changed', loadUser)
+})
+
+
+onUnmounted(() => {
+  window.removeEventListener('auth-changed', loadUser)
+})
 </script>
 
 <style scoped>
