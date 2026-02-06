@@ -67,98 +67,47 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { api } from 'boot/axios' 
 
 const router = useRouter()
 const slide = ref(0)
 
+const featuredEvents = ref([])
+const loading = ref(false)
 
+const loadEvents = async () => {
+  loading.value = true
+  const token = localStorage.getItem('token')
 
+  try {
+    const res = await api.get(
+      '/auth/events',
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    )
 
-const featuredEvents = ref([
-  {
-    id: 1,
-    name: 'Concierto Pop 2026',
-    date: '24 Ene 2026',
-    location: 'Estadio Nacional',
-    image: 'https://source.unsplash.com/600x400/?concert'
-  },
-  {
-    id: 1,
-    name: 'Concierto Pop 2026',
-    date: '24 Ene 2026',
-    location: 'Estadio Nacional',
-    image: 'https://source.unsplash.com/600x400/?concert'
-  },
-  {
-    id: 1,
-    name: 'Concierto Pop 2026',
-    date: '24 Ene 2026',
-    location: 'Estadio Nacional',
-    image: 'https://source.unsplash.com/600x400/?concert'
-  },
-  {
-    id: 1,
-    name: 'Concierto Pop 2026',
-    date: '24 Ene 2026',
-    location: 'Estadio Nacional',
-    image: 'https://source.unsplash.com/600x400/?concert'
-  },
-  {
-    id: 1,
-    name: 'Concierto Pop 2026',
-    date: '24 Ene 2026',
-    location: 'Estadio Nacional',
-    image: 'https://source.unsplash.com/600x400/?concert'
-  },
-  {
-    id: 1,
-    name: 'Concierto Pop 2026',
-    date: '24 Ene 2026',
-    location: 'Estadio Nacional',
-    image: 'https://source.unsplash.com/600x400/?concert'
-  },
-  {
-    id: 1,
-    name: 'Concierto Pop 2026',
-    date: '24 Ene 2026',
-    location: 'Estadio Nacional',
-    image: 'https://source.unsplash.com/600x400/?concert'
-  },
-  {
-    id: 1,
-    name: 'Concierto Pop 2026',
-    date: '24 Ene 2026',
-    location: 'Estadio Nacional',
-    image: 'https://source.unsplash.com/600x400/?concert'
-  },
-  {
-    id: 1,
-    name: 'Concierto Pop 2026',
-    date: '24 Ene 2026',
-    location: 'Estadio Nacional',
-    image: 'https://source.unsplash.com/600x400/?concert'
-  },
-  {
-    id: 1,
-    name: 'Concierto Pop 2026',
-    date: '24 Ene 2026',
-    location: 'Estadio Nacional',
-    image: 'https://source.unsplash.com/600x400/?concert'
-  },
-  {
-    id: 1,
-    name: 'Concierto Pop 2026',
-    date: '24 Ene 2026',
-    location: 'Estadio Nacional',
-    image: 'https://source.unsplash.com/600x400/?concert'
-  },
-])
+    // Si necesitas filtrar destacados
+    featuredEvents.value = res.data
+
+  } catch (error) {
+    console.error('Error cargando eventos', error)
+  } finally {
+    loading.value = false
+  }
+}
 
 const buyTicket = (id) => {
   router.push(`/event/${id}`)
 }
+
+onMounted(() => {
+  loadEvents()
+})
 </script>
 
 

@@ -26,18 +26,25 @@
       <div v-if="isAuthenticated" class="drawer-header row items-center q-gutter-sm">
         <q-icon :name="profileIcon" size="32px" />
         <div class="column">
-          <span class="text-weight-bold">{{ user.name }}</span>
+          <span class="text-weight-bold">{{ user.user.name }}</span>
           <span class="text-caption">Mi perfil</span>
         </div>
       </div>
 
       <q-list padding>
 
-        <q-item clickable to="/">
+        <q-item clickable to="/home">
           <q-item-section avatar>
             <q-icon name="home" />
           </q-item-section>
           <q-item-section>Inicio</q-item-section>
+        </q-item>
+
+        <q-item clickable to="/my-tickets">
+          <q-item-section avatar>
+            <q-icon name="ticket" />
+          </q-item-section>
+          <q-item-section>Mis Entradas</q-item-section>
         </q-item>
 
         <q-item clickable to="/entrada-general">
@@ -72,17 +79,6 @@
 
         <!-- LOGIN / LOGOUT -->
         <q-item
-          v-if="!loadingAuth && !isAuthenticated"
-          clickable
-          to="/login-phone"
-        >
-          <q-item-section avatar>
-            <q-icon name="login" />
-          </q-item-section>
-          <q-item-section>Iniciar sesión</q-item-section>
-        </q-item>
-
-        <q-item
           v-if="!loadingAuth && isAuthenticated"
           clickable
           @click="logout"
@@ -112,13 +108,15 @@
 
 <script setup>
 import { ref, computed, onMounted,onUnmounted, watch} from 'vue'
-import axios from 'axios'
+import {  useRouter } from 'vue-router'
+import { api } from 'boot/axios' 
 
 const leftDrawerOpen = ref(false)
-const user = ref(null)
-const loadingAuth = ref(true)
+const router = useRouter()
 
 const token = ref(localStorage.getItem('token'))
+const user = ref(null)
+const loadingAuth = ref(true)
 
 const loadUser = async () => {
   if (!token.value) {
@@ -128,18 +126,41 @@ const loadUser = async () => {
   }
 
   try {
-    axios.defaults.headers.common.Authorization = `Bearer ${token.value}`
-    const res = await axios.get('http://127.0.0.1:8000/api/auth/me')
+    api.defaults.headers.common.Authorization =
+      `Bearer ${token.value}`
+
+    const res = await api.get(
+      '/auth/me'
+    )
+
     user.value = res.data
+
   } catch (error) {
-    localStorage.removeItem('token')
     console.log(error)
+
+    // ⚠️ NO borres token si es throttle
+    if (error.response?.status === 429) return
+
+    localStorage.removeItem('token')
     token.value = null
     user.value = null
+
   } finally {
     loadingAuth.value = false
   }
 }
+
+
+const logout = () => {
+  localStorage.removeItem('token')
+  user.value = null
+  token.value = null
+
+  window.dispatchEvent(new Event('auth-changed'))
+
+  router.replace('/')
+}
+
 
 watch(token, () => {
   loadUser()
@@ -162,16 +183,21 @@ const profileIcon = computed(() => {
   }
 })
 
+const handleAuthChange = () => {
+  token.value = localStorage.getItem('token')
+  loadUser()
+}
+
 onMounted(() => {
   loadUser()
-
-  window.addEventListener('auth-changed', loadUser)
+  window.addEventListener('auth-changed', handleAuthChange)
 })
-
 
 onUnmounted(() => {
-  window.removeEventListener('auth-changed', loadUser)
+  window.removeEventListener('auth-changed', handleAuthChange)
 })
+
+
 </script>
 
 <style scoped>

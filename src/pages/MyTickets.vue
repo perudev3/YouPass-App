@@ -62,7 +62,7 @@
 </template>
 <script setup>
 import { ref, onMounted } from 'vue'
-import axios from 'axios'
+import { api } from 'boot/axios' 
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
@@ -79,8 +79,8 @@ const loadTickets = async () => {
   }
 
   try {
-    const res = await axios.get(
-      'http://127.0.0.1:8000/api/auth/my-tickets',
+    const res = await api.get(
+      '/auth/my-tickets',
       {
         headers: {
           Authorization: `Bearer ${token}`

@@ -52,12 +52,11 @@
 <script setup>
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import axios from 'axios'
+import { api } from 'boot/axios' 
 
 
 const route = useRoute()
 const router = useRouter()
-
 
 const phone = route.query.phone
 const otp = ref('')
@@ -87,7 +86,7 @@ const verify = async () => {
   }
 
   try {
-    const res = await axios.post('http://127.0.0.1:8000/api/auth/verify-otp', {
+    const res = await api.post('/auth/verify-otp', {
       phone,
       code: otp.value
     })
@@ -105,7 +104,7 @@ const verify = async () => {
     if (res.data.needs_profile) {
       router.push('/register-profile')
     } else {
-      window.location.replace('/')
+      router.replace('/home')
     }
 
   } catch {
@@ -130,7 +129,7 @@ const verify = async () => {
 .otp-display {
   font-size: 2rem;
   letter-spacing: 10px;
-  margin: 24px 0;
+  margin: -15px;
   text-align: center;
 }
 
@@ -139,7 +138,7 @@ const verify = async () => {
   padding: 16px;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
+  gap: 5px;
 }
 
 /* BOTONES NUMÉRICOS */

@@ -13,7 +13,7 @@
       </div>
 
       <h5 class="title">
-        ¿Puedes darnos tu<br />número telefónico?
+        ¿Digita tu<br />número telefónico?
       </h5>
 
       <p class="subtitle">
@@ -61,7 +61,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import axios from 'axios'
+import { api } from 'boot/axios' 
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
@@ -97,7 +97,7 @@ const submit = async () => {
   }
 
   try {
-    await axios.post('http://127.0.0.1:8000/api/auth/send-otp', {
+    await api.post('/auth/send-otp', {
       phone: phone.value
     })
   } catch (error) {

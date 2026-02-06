@@ -18,7 +18,7 @@
 </template>
 <script setup>
 import { ref } from 'vue'
-import axios from 'axios'
+import { api } from 'boot/axios' 
 import { QrcodeStream } from 'vue-qrcode-reader'
 
 const result = ref(null)
@@ -29,8 +29,8 @@ const onDecode = async (code) => {
   locked = true
 
   try {
-    const res = await axios.post(
-      'http://127.0.0.1:8000/api/auth/tickets/validate',
+    const res = await api.post(
+      '/auth/tickets/validate',
       { code },
       {
         headers: {

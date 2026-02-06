@@ -86,8 +86,7 @@
 
 <script setup>
 import { ref } from 'vue'
-import axios from 'axios'
-
+import { api } from 'boot/axios' 
 const loading = ref(false)
 
 const form = ref({
@@ -112,8 +111,8 @@ const submit = async () => {
   loading.value = true
 
   try {
-    await axios.post(
-      'http://127.0.0.1:8000/api/auth/register-profile',
+    await api.post(
+      '/auth/register-profile',
       form.value,
       {
         headers: {

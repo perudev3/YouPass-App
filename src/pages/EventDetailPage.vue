@@ -8,7 +8,6 @@
 
     <!-- INFO -->
     <div class="content">
-
       <div class="title">{{ event.name }}</div>
 
       <div class="meta">
@@ -110,57 +109,19 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import axios from 'axios' // Asegúrate de tener axios instalado
+import { api } from 'boot/axios' 
 
 const route = useRoute()
 const router = useRouter()
 
 /* =========================
-   MOCK EVENT DATA
+   STATE
 ========================= */
-const event = ref({
-  id: route.params.id,
-  name: 'Festival YouPass 2026',
-  date: '24 Enero 2026',
-  location: 'Estadio Nacional',
-  image: 'https://images.unsplash.com/photo-1507874457470-272b3c8d8ee2',
-  ticket_types: [
-    { id: 1, name: 'Entrada General', price: 80, stock: 300 },
-    { id: 2, name: 'Entrada VIP', price: 150, stock: 80 }
-  ]
-})
-
+const event = ref({})
 const tickets = ref([])
-const cart = ref({}) // { ticketTypeId: quantity }
+const cart = ref({})
+const loading = ref(true)
 
-/* =========================
-   INIT
-========================= */
-onMounted(() => {
-  tickets.value = event.value.ticket_types
-})
-
-/* =========================
-   CART ACTIONS
-========================= */
-const addTicket = (ticket) => {
-  const currentQty = cart.value[ticket.id] || 0
-  if (currentQty >= ticket.stock) {
-    alert('Stock máximo alcanzado')
-    return
-  }
-  cart.value[ticket.id] = currentQty + 1
-}
-
-const removeTicket = (ticket) => {
-  if (!cart.value[ticket.id]) return
-  cart.value[ticket.id]--
-  if (cart.value[ticket.id] <= 0) delete cart.value[ticket.id]
-}
-
-/* =========================
-   TOTAL
-========================= */
 const total = computed(() => {
   return tickets.value.reduce((sum, t) => {
     const qty = cart.value[t.id] || 0
@@ -168,9 +129,53 @@ const total = computed(() => {
   }, 0)
 })
 
+
 /* =========================
-   REAL BUY
+   LOAD EVENT FROM API
 ========================= */
+const loadEvent = async () => {
+  try {
+    const { id } = route.params
+
+   const res = await api.get(`/auth/events/${id}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      }
+    )
+
+    event.value = res.data
+    tickets.value = res.data.ticket_types || []
+
+  } catch (error) {
+    console.error('Error cargando evento', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+const addTicket = (ticket) => {
+  const qty = cart.value[ticket.id] || 0
+
+  if (qty >= ticket.stock) {
+    alert('Stock máximo alcanzado')
+    return
+  }
+
+  cart.value[ticket.id] = qty + 1
+}
+
+const removeTicket = (ticket) => {
+  if (!cart.value[ticket.id]) return
+
+  cart.value[ticket.id]--
+
+  if (cart.value[ticket.id] <= 0) {
+    delete cart.value[ticket.id]
+  }
+}
+
+
 const buyTickets = async () => {
   if (total.value === 0) {
     alert('Selecciona al menos una entrada')
@@ -178,31 +183,36 @@ const buyTickets = async () => {
   }
 
   try {
-    const response = await axios.post('http://127.0.0.1:8000/api/auth/purchases', {
-      event_id: Number(event.value.id), // convertir a número
-      items: cart.value,
-      total: total.value
-    }, {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`
+    const res = await api.post('/auth/purchases',
+      {
+        event_id: Number(event.value.id),
+        items: cart.value,
+        total: total.value
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
       }
-    })
+    )
 
-
-    if (response.data.success) {
+    if (res.data.success) {
       alert('Compra realizada con éxito 🎉')
-      // Limpiar carrito
       cart.value = {}
-      // Redirigir a mis tickets
       router.push('/my-tickets')
-    } else {
-      alert('Ocurrió un error: ' + response.data.message)
     }
+
   } catch (error) {
     console.error(error)
-    alert('Error al procesar la compra, intenta de nuevo')
+    alert('Error al comprar')
   }
 }
+
+
+onMounted(() => {
+  loadEvent()
+})
+
 </script>
 
 
