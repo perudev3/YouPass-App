@@ -20,6 +20,7 @@
       :key="ticket.id"
       flat
       class="ticket-card"
+      :data-ticket="ticket.id"
     >
       <!-- EVENT IMAGE -->
       <div class="event-img">
@@ -51,24 +52,47 @@
 
       <!-- QR -->
       <div class="qr">
-        <img
-          v-if="ticket.qr"
-          :src="ticket.qr"
-        />
+
+        <!-- QR GENERADO -->
+        <div class="qr-box" v-if="ticket.qr || ticket.code">
+
+          <QRCode
+            :value="ticket.qr || ticket.code"
+            :size="140"
+            level="H"
+            :ref="setQrRef(ticket.id)"
+          />
+
+          <q-btn
+            label="Descargar"
+            icon="download"
+            size="sm"
+            class="download-btn"
+            @click="downloadQR(ticket)"
+          />
+        </div>
+
       </div>
+
+
     </q-card>
 
   </q-page>
 </template>
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted  } from 'vue'
 import { api } from 'boot/axios' 
 import { useRouter } from 'vue-router'
+
+import QRCode from 'qrcode'
+
 
 const router = useRouter()
 
 const tickets = ref([])
 const loading = ref(true)
+const qrRefs = ref({})
+
 
 const loadTickets = async () => {
   const token = localStorage.getItem('token')
@@ -102,6 +126,41 @@ const statusLabel = (status) => {
   if (status === 'used') return 'Usado'
   if (status === 'cancelled') return 'Cancelado'
 }
+
+const setQrRef = (id) => (el) => {
+  if (el) {
+    qrRefs.value[id] = el
+  }
+}
+
+const downloadQR = async (ticket) => {
+  try {
+    console.log('descargando', ticket.id)
+
+    // Valor del QR
+    const value = ticket.qr || ticket.code
+
+    // Generar imagen base64
+    const url = await QRCode.toDataURL(value, {
+      width: 300,
+      margin: 2,
+      color: {
+        dark: '#000000',
+        light: '#FFFFFF'
+      }
+    })
+
+    // Descargar
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `ticket-${ticket.id}.png`
+    link.click()
+
+  } catch (error) {
+    console.error('Error generando QR', error)
+  }
+}
+
 
 onMounted(loadTickets)
 </script>
@@ -207,16 +266,36 @@ onMounted(loadTickets)
   color: white;
 }
 
-/* QR */
-.qr {
-  padding: 12px;
+/* QR BOX */
+.qr-box {
   display: flex;
-  justify-content: center;
-  background: #020617;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
 }
 
-.qr img {
-  width: 140px;
+/* Fondo QR tipo ticket */
+.qr canvas {
+  background: white;
+  padding: 10px;
+  border-radius: 12px;
+
+  box-shadow:
+    0 0 10px rgba(0,0,0,0.4),
+    0 0 18px rgba(255,194,32,0.25);
 }
+
+/* Botón descargar */
+.download-btn {
+  background: #FFC220;
+  color: #1A1A1A;
+  font-weight: 700;
+  border-radius: 10px;
+}
+
+.download-btn:hover {
+  background: #F5B300;
+}
+
 
 </style>

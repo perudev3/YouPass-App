@@ -14,7 +14,9 @@
           color="white"
           @click="leftDrawerOpen = true"
         />
-        <span class="logo">YouPass</span>
+        <span class="logo">
+          <img src="/logo-sin-fondo.png" width="120" />
+        </span>
       </q-toolbar>
     </q-header>
 
@@ -92,7 +94,7 @@
 
       <!-- LOGO ABAJO -->
       <div class="q-pa-md text-center">
-        <img src="/logo-youpass.svg" width="120" />
+        <img src="/logo-sin-fondo.png" width="120" />
       </div>
 
     </q-drawer>
@@ -201,30 +203,340 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+.q-page-container{  
+  padding-top: 0px !important;
+}
 .top-bar {
   height: 56px;
-  background: #020617;
-  color: white;
+  position: relative;
+  z-index: 1000;
+
+  background: linear-gradient(
+    90deg,
+    #020617 0%,
+    #0F172A 60%,
+    #020617 100%
+  );
+
+  color: #FFFFFF;
+
+  border-bottom: 1px solid #1F2937;
+
+  box-shadow: 0 2px 12px rgba(255, 194, 32, 0.08);
+
+  backdrop-filter: blur(6px);
 }
 
+.q-toolbar {
+  min-height: 56px;
+  padding-left: 12px;
+  padding-right: 12px;
+}
+
+/* Botón menú */
+.top-bar .q-btn {
+  color: #E5E7EB;
+  transition: all 0.25s ease;
+  border-radius: 12px;
+}
+
+.top-bar .q-btn:hover {
+  background: rgba(255, 194, 32, 0.12);
+  color: #FFC220;
+  transform: scale(1.05);
+}
+
+.top-bar .q-btn:active {
+  transform: scale(0.95);
+}
+
+/* Logo texto */
 .logo {
   font-weight: 900;
-  font-size: 1.2rem;
+  font-size: 1.15rem;
+  letter-spacing: 0.6px;
+
+  background: linear-gradient(
+    135deg,
+    #FFC220,
+    #FFD84D,
+    #F5B300
+  );
+
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+
+  text-shadow: 0 0 10px rgba(255, 194, 32, 0.35);
+  user-select: none;
+  margin: -10px;
 }
 
-/* DRAWER */
+/* Línea dorada inferior */
+.top-bar::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+
+  background: linear-gradient(
+    90deg,
+    transparent,
+    #FFC220,
+    #F5B300,
+    #FFC220,
+    transparent
+  );
+}
+
+
+/* =========================================================
+   DRAWER BASE
+========================================================= */
 .drawer {
-  background: #020617;
+  background: #0F172A;
+  color: #E5E7EB;
+}
+
+.q-drawer--left.q-drawer--bordered {
+  border-right: 1px solid #1F2937 !important;
+}
+
+
+/* =========================================================
+   PERFIL HEADER
+========================================================= */
+.drawer-header {
+  padding: 18px 16px;
+  margin: 12px;
+  border-radius: 16px;
+
+  background: linear-gradient(
+    135deg,
+    #111827,
+    #020617
+  );
+
+  border: 1px solid rgba(255, 194, 32, 0.25);
+
+  box-shadow: 0 0 12px rgba(255, 194, 32, 0.15);
+
+  transition: all 0.3s ease;
+}
+
+.drawer-header:hover {
+  box-shadow: 0 0 18px rgba(255, 194, 32, 0.35);
+}
+
+/* Icono perfil */
+.drawer-header .q-icon {
+  font-size: 32px;
+
+  background: #FFC220;
+  color: #1A1A1A;
+
+  padding: 10px;
+  border-radius: 50%;
+
+  box-shadow: 0 0 10px rgba(255, 194, 32, 0.6);
+}
+
+/* Nombre */
+.drawer-header .text-weight-bold {
+  color: #FFFFFF;
+  font-size: 0.95rem;
+  letter-spacing: 0.3px;
+}
+
+/* Subtexto */
+.drawer-header .text-caption {
+  color: #9CA3AF;
+  font-size: 0.75rem;
+}
+
+
+/* =========================================================
+   GÉNERO COLORES PERFIL
+   (usa clase dinámica hombre / mujer)
+========================================================= */
+.drawer-header.hombre .q-icon {
+  background: #2D8CFF;
+  color: white;
+  box-shadow: 0 0 10px rgba(45, 140, 255, 0.6);
+}
+
+.drawer-header.mujer .q-icon {
+  background: #FF4DB8;
+  color: white;
+  box-shadow: 0 0 10px rgba(255, 77, 184, 0.6);
+}
+
+.drawer-header.otro .q-icon {
+  background: #6C4DFF;
   color: white;
 }
 
-.drawer-header {
-  padding: 20px;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
+
+/* =========================================================
+   ITEMS MENU
+========================================================= */
+.q-item {
+  border-radius: 12px;
+  margin: 4px 8px;
+  transition: all 0.25s ease;
+  color: #E5E7EB;
 }
 
-.drawer-logo {
-  font-weight: 900;
-  font-size: 1.4rem;
+.q-item .q-icon {
+  color: #9CA3AF;
+  transition: all 0.25s ease;
 }
+
+/* Hover */
+.q-item:hover {
+  background: #1F2937;
+  color: #FFFFFF;
+}
+
+.q-item:hover .q-icon {
+  color: #FFC220;
+}
+
+
+/* =========================================================
+   ITEM ACTIVO
+========================================================= */
+.q-item.q-router-link--active,
+.q-item--active {
+  background: #FFC220 !important;
+  color: #1A1A1A !important;
+  font-weight: 600;
+}
+
+.q-item.q-router-link--active .q-icon,
+.q-item--active .q-icon {
+  color: #1A1A1A !important;
+}
+
+
+/* =========================================================
+   SEPARADORES
+========================================================= */
+.q-separator {
+  background: #1F2937;
+  height: 1px;
+  opacity: 1;
+}
+
+
+/* =========================================================
+   LOGO INFERIOR
+========================================================= */
+.drawer img {
+  opacity: 0.9;
+  filter: drop-shadow(0 0 6px rgba(255, 194, 32, 0.35));
+  transition: all 0.3s ease;
+}
+
+.drawer img:hover {
+  opacity: 1;
+  transform: scale(1.05);
+}
+
+
+/* =========================================================
+   SCROLLBAR
+========================================================= */
+.drawer ::-webkit-scrollbar {
+  width: 6px;
+}
+
+.drawer ::-webkit-scrollbar-thumb {
+  background: #FFC220;
+  border-radius: 10px;
+}
+
+.drawer ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+
+/* =========================================================
+   OVERLAY MOBILE
+========================================================= */
+.q-drawer__backdrop {
+  background: rgba(2, 6, 23, 0.7);
+  backdrop-filter: blur(4px);
+}
+
+
+/* =========================================================
+   SAFE AREA MOBILE
+========================================================= */
+@supports (padding-top: env(safe-area-inset-top)) {
+  .top-bar {
+    padding-top: env(safe-area-inset-top);
+    height: calc(56px + env(safe-area-inset-top));
+  }
+}
+
+:deep(.q-item__section--main) {
+  color: #E5E7EB !important;
+}
+
+/* =====================================================
+   SIDEBAR ITEMS DARK MODE FIX
+===================================================== */
+
+/* Item base */
+.q-item {
+  background: #0F172A !important;   /* ← Fondo oscuro real */
+  color: #E5E7EB !important;
+  border-radius: 12px;
+  margin: 4px 8px;
+  transition: all 0.25s ease;
+}
+
+/* Texto */
+.q-item__label,
+.q-item__section--main {
+  color: #E5E7EB !important;
+  opacity: 1 !important;
+}
+
+/* Iconos */
+.q-item .q-icon {
+  color: #9CA3AF !important;
+}
+
+/* Hover */
+.q-item:hover {
+  background: #1F2937 !important;
+  color: #FFFFFF !important;
+}
+
+.q-item:hover .q-icon {
+  color: #FFC220 !important;
+}
+
+/* Activo */
+.q-item.q-router-link--active,
+.q-item--active {
+  background: #FFC220 !important;
+  color: #1A1A1A !important;
+  font-weight: 600;
+}
+
+.q-item.q-router-link--active .q-item__label,
+.q-item--active .q-item__label {
+  color: #1A1A1A !important;
+}
+
+.q-item.q-router-link--active .q-icon,
+.q-item--active .q-icon {
+  color: #1A1A1A !important;
+}
+
+
 </style>

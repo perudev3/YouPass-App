@@ -42,9 +42,66 @@
         </q-card>
     </div>
 
+<!-- =========================
+     MAPA ASIENTOS
+========================= -->
+<div class="section-title">Selecciona tus asientos</div>
+
+<div class="seat-map">
+
+  <!-- ESCENARIO -->
+  <div class="stage">
+    ESCENARIO
+  </div>
+
+  <!-- BLOQUE VIP -->
+  <div class="block">
+    <div class="block-title vip-title">
+      VIP
+    </div>
+
+    <div class="seats">
+      <div
+        v-for="seat in vipSeats"
+        :key="seat.id"
+        class="seat vip"
+        :class="{
+          selected: seat.selected,
+          sold: seat.sold
+        }"
+        @click="toggleSeat(seat, 'vip')"
+      >
+        {{ seat.label }}
+      </div>
+    </div>
+  </div>
+
+  <!-- BLOQUE GENERAL -->
+  <div class="block">
+    <div class="block-title general-title">
+      GENERAL
+    </div>
+
+    <div class="seats">
+      <div
+        v-for="seat in generalSeats"
+        :key="seat.id"
+        class="seat general"
+        :class="{
+          selected: seat.selected,
+          sold: seat.sold
+        }"
+        @click="toggleSeat(seat, 'general')"
+      >
+        {{ seat.label }}
+      </div>
+    </div>
+  </div>
+
+</div>
 
     <!-- TICKETS -->
-      <div class="section-title">Entradas</div>
+    <div class="section-title">Entradas</div>
 
       <q-card
         v-for="ticket in tickets"
@@ -113,6 +170,48 @@ import { api } from 'boot/axios'
 
 const route = useRoute()
 const router = useRouter()
+
+/* =========================
+   SEAT DATA
+========================= */
+
+const createSeats = (prefix, total) => {
+  return Array.from({ length: total }, (_, i) => ({
+    id: `${prefix}-${i + 1}`,
+    label: i + 1,
+    selected: false,
+    sold: false // luego viene de DB
+  }))
+}
+
+const vipSeats = ref(createSeats('VIP', 12))
+const generalSeats = ref(createSeats('GEN', 24))
+
+
+/* =========================
+   TOGGLE SEAT
+========================= */
+const toggleSeat = (seat, zone) => {
+
+  if (seat.sold) return
+
+  seat.selected = !seat.selected
+
+  /* buscar ticket type */
+  const ticket = tickets.value.find(t =>
+    t.name.toLowerCase().includes(zone)
+  )
+
+  if (!ticket) return
+
+  if (seat.selected) {
+    addTicket(ticket)
+  } else {
+    removeTicket(ticket)
+  }
+}
+
+
 
 /* =========================
    STATE
@@ -339,5 +438,192 @@ onMounted(() => {
   text-align: center;
   line-height: 1.2;
 }
+
+/* =========================
+   MAPA EVENTO
+========================= */
+
+.map-container {
+  background: #020617;
+  border-radius: 18px;
+  padding: 20px;
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+/* ESCENARIO */
+.stage {
+  background: linear-gradient(
+    90deg,
+    #334155,
+    #1e293b
+  );
+
+  border-radius: 12px;
+  padding: 10px;
+  font-weight: 800;
+  font-size: 0.75rem;
+  margin-bottom: 20px;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+
+  color: #facc15;
+}
+
+/* GRID ZONAS */
+.zones {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* ZONA BASE */
+.zone {
+  border-radius: 14px;
+  padding: 26px 10px;
+  font-weight: 900;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: 0.25s;
+  user-select: none;
+}
+
+/* VIP */
+.zone.vip {
+  background: linear-gradient(
+    180deg,
+    #22c55e,
+    #15803d
+  );
+}
+
+/* GENERAL */
+.zone.general {
+  background: linear-gradient(
+    180deg,
+    #60a5fa,
+    #2563eb
+  );
+}
+
+/* HOVER */
+.zone:hover {
+  transform: scale(1.05);
+}
+
+/* ACTIVA */
+.zone.active {
+  outline: 3px solid #facc15;
+  transform: scale(1.08);
+  box-shadow:
+    0 0 20px rgba(250,204,21,0.5);
+}
+
+/* =========================
+   SEAT MAP
+========================= */
+
+.seat-map {
+  background: #020617;
+  padding: 20px;
+  border-radius: 20px;
+  margin-bottom: 24px;
+}
+
+/* ESCENARIO */
+.stage {
+  background: linear-gradient(
+    90deg,
+    #475569,
+    #1e293b
+  );
+
+  text-align: center;
+  padding: 12px;
+  border-radius: 12px;
+  font-weight: 900;
+  font-size: 0.75rem;
+  margin-bottom: 20px;
+  color: #facc15;
+}
+
+/* BLOQUES */
+.block {
+  margin-bottom: 18px;
+}
+
+/* TITULOS */
+.block-title {
+  font-size: 0.75rem;
+  font-weight: 900;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.vip-title {
+  color: #22c55e;
+}
+
+.general-title {
+  color: #60a5fa;
+}
+
+/* GRID ASIENTOS */
+.seats {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 10px;
+  justify-items: center;
+}
+
+/* ASIENTO BASE */
+.seat {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  font-size: 0.65rem;
+  font-weight: 900;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+/* VIP */
+.seat.vip {
+  background: #14532d;
+}
+
+/* GENERAL */
+.seat.general {
+  background: #1e3a8a;
+}
+
+/* HOVER */
+.seat:hover {
+  transform: scale(1.1);
+}
+
+/* SELECCIONADO */
+.seat.selected {
+  background: #facc15;
+  color: #020617;
+  box-shadow:
+    0 0 10px rgba(250,204,21,0.7);
+}
+
+/* VENDIDO */
+.seat.sold {
+  background: #475569;
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
 
 </style>
