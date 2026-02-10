@@ -47,58 +47,91 @@
 ========================= -->
 <div class="section-title">Selecciona tus asientos</div>
 
-<div class="seat-map">
+    <!-- =========================
+        MAPA ASIENTOS PRO
+    ========================= -->
+    <div class="seat-map">
 
-  <!-- ESCENARIO -->
-  <div class="stage">
-    ESCENARIO
-  </div>
+      <!-- =========================
+          DJ VIP (ARRIBA ESCENARIO)
+      ========================= -->
+      <div class="dj-vip-row">
 
-  <!-- BLOQUE VIP -->
-  <div class="block">
-    <div class="block-title vip-title">
-      VIP
-    </div>
+        <div
+          v-for="seat in vipCenterSeats"
+          :key="seat.id"
+          class="seat vip-center"
+          :class="{ selected: seat.selected, sold: seat.sold }"
+          @click="toggleSeat(seat, 'vipCenter')"
+        >
+          {{ seat.label }}
+        </div>
 
-    <div class="seats">
-      <div
-        v-for="seat in vipSeats"
-        :key="seat.id"
-        class="seat vip"
-        :class="{
-          selected: seat.selected,
-          sold: seat.sold
-        }"
-        @click="toggleSeat(seat, 'vip')"
-      >
-        {{ seat.label }}
       </div>
-    </div>
-  </div>
 
-  <!-- BLOQUE GENERAL -->
-  <div class="block">
-    <div class="block-title general-title">
-      GENERAL
-    </div>
 
-    <div class="seats">
-      <div
-        v-for="seat in generalSeats"
-        :key="seat.id"
-        class="seat general"
-        :class="{
-          selected: seat.selected,
-          sold: seat.sold
-        }"
-        @click="toggleSeat(seat, 'general')"
-      >
-        {{ seat.label }}
+      <!-- ESCENARIO -->
+      <div class="stage-dj">
+        <div class="dj">🎧 DJ</div>
       </div>
-    </div>
-  </div>
 
-</div>
+      <!-- MAPA CENTRAL -->
+      <div class="map-area">
+
+        <!-- VIP IZQUIERDA -->
+        <div class="vip-side">
+          <div class="block-title">VIP Mesa</div>
+          <div class="vip-table">
+              <div
+                v-for="seat in leftVipSeats"
+                :key="seat.id"
+                class="seat vip"
+                :class="{ selected: seat.selected, sold: seat.sold }"
+                @click="toggleSeat(seat, 'vipLeft')"
+              >
+                {{ seat.label }}
+              </div>
+          </div>
+        </div>
+
+        <!-- CENTRO DJ -->
+         <div class="dj-area">
+         
+          <!-- <div
+            v-for="(seat, index) in vipCenterSeats"
+            :key="seat.id"
+            class="seat vip-center dj-seat"
+            :class="[
+              `pos-${index+1}`,
+              { selected: seat.selected }
+            ]"
+            @click="toggleSeat(seat)"
+          >
+            {{ seat.number }}
+          </div> -->
+
+        </div>
+
+
+        <!-- VIP DERECHA -->
+        <div class="vip-side">
+          <div class="block-title">VIP Mesa</div>
+          <div class="vip-table">
+            <div
+              v-for="seat in rightVipSeats"
+              :key="seat.id"
+              class="seat vip"
+              :class="{ selected: seat.selected, sold: seat.sold }"
+              @click="toggleSeat(seat, 'vipRight')"
+            >
+              {{ seat.label }}
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
 
     <!-- TICKETS -->
     <div class="section-title">Entradas</div>
@@ -117,26 +150,11 @@
           </div>
 
           <div class="row items-center q-gutter-sm">
-            <q-btn
-              round
-              dense
-              icon="remove"
-              color="grey-8"
-              @click="removeTicket(ticket)"
-              :disable="!cart[ticket.id]"
-            />
 
             <span class="qty">
               {{ cart[ticket.id] || 0 }}
             </span>
 
-            <q-btn
-              round
-              dense
-              icon="add"
-              color="yellow-8"
-              @click="addTicket(ticket)"
-            />
           </div>
 
         </div>
@@ -184,8 +202,17 @@ const createSeats = (prefix, total) => {
   }))
 }
 
-const vipSeats = ref(createSeats('VIP', 12))
-const generalSeats = ref(createSeats('GEN', 24))
+// Total 21 asientos
+const vipSeats = ref(createSeats('VIP', 21))
+
+// 🎧 DJ → 5 asientos
+const vipCenterSeats = ref(vipSeats.value.slice(0, 5))
+
+// 🍾 VIP Mesa izquierda → 8
+const leftVipSeats = ref(vipSeats.value.slice(5, 13))
+
+// 🍾 VIP Mesa derecha → 8
+const rightVipSeats = ref(vipSeats.value.slice(13, 21))
 
 
 /* =========================
@@ -195,22 +222,43 @@ const toggleSeat = (seat, zone) => {
 
   if (seat.sold) return
 
+  if (!tickets.value.length) {
+    console.warn('Tickets aún no cargados')
+    return
+  }
+
   seat.selected = !seat.selected
 
-  /* buscar ticket type */
-  const ticket = tickets.value.find(t =>
-    t.name.toLowerCase().includes(zone)
-  )
+  let ticket = null
 
-  if (!ticket) return
+  // 🎧 DJ = VIP
+  if (zone === 'vipCenter') {
+    ticket = tickets.value.find(t =>
+      t.name.toLowerCase().includes('vip')
+    )
+  }
+
+  // 🍾 Mesas = VIP también
+  if (zone === 'vipLeft' || zone === 'vipRight') {
+    ticket = tickets.value.find(t =>
+      t.name.toLowerCase().includes('vip')
+    )
+  }
+
+  if (!ticket) {
+    console.error('❌ Ticket no encontrado para zona:', zone)
+    console.log('Tickets disponibles:', tickets.value)
+    return
+  }
 
   if (seat.selected) {
     addTicket(ticket)
   } else {
     removeTicket(ticket)
   }
-}
 
+  console.log('🛒 Cart:', cart.value)
+}
 
 
 /* =========================
@@ -522,69 +570,96 @@ onMounted(() => {
     0 0 20px rgba(250,204,21,0.5);
 }
 
+
 /* =========================
-   SEAT MAP
+   SEAT MAP PRO
 ========================= */
 
 .seat-map {
   background: #020617;
-  padding: 20px;
   border-radius: 20px;
+  padding: 24px;
   margin-bottom: 24px;
 }
 
 /* ESCENARIO */
-.stage {
-  background: linear-gradient(
-    90deg,
-    #475569,
-    #1e293b
-  );
-
+.stage-dj {
+  background: linear-gradient(90deg,#475569,#1e293b);
+  border-radius: 14px;
+  padding: 16px;
   text-align: center;
-  padding: 12px;
-  border-radius: 12px;
-  font-weight: 900;
-  font-size: 0.75rem;
-  margin-bottom: 20px;
+  margin-bottom: 40px;
+}
+
+/* =========================
+   DJ VIP FILA
+========================= */
+
+.dj-vip-row {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+
+.dj {
+  background: #111827;
   color: #facc15;
+  font-weight: 900;
+  width: 140px;
+  margin: auto;
+  padding: 10px 0;
+  border-radius: 8px;
 }
 
-/* BLOQUES */
-.block {
-  margin-bottom: 18px;
+/* AREA CENTRAL */
+.map-area {
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr;
+  align-items: center;
+  gap: 20px;
 }
 
-/* TITULOS */
+/* LADOS VIP */
+.vip-side {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.vip-table {
+  display: grid;
+  grid-template-columns: repeat(2, 44px);
+  gap: 4px;
+  justify-content: center;
+}
+
+
+/* TITULO */
 .block-title {
   font-size: 0.75rem;
   font-weight: 900;
-  margin-bottom: 10px;
-  text-align: center;
-}
-
-.vip-title {
   color: #22c55e;
 }
 
-.general-title {
-  color: #60a5fa;
-}
-
-/* GRID ASIENTOS */
-.seats {
+/* CENTRO VIP */
+.vip-center-grid {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 10px;
-  justify-items: center;
+  grid-template-columns: repeat(3, 60px);
+  gap: 16px;
+  justify-content: center;
 }
 
-/* ASIENTO BASE */
+
+/* ASIENTOS */
 .seat {
-  width: 34px;
-  height: 34px;
-  border-radius: 8px;
-  font-size: 0.65rem;
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  font-size: 0.7rem;
   font-weight: 900;
 
   display: flex;
@@ -595,14 +670,16 @@ onMounted(() => {
   transition: 0.2s;
 }
 
-/* VIP */
+/* VIP LATERAL */
 .seat.vip {
   background: #14532d;
 }
 
-/* GENERAL */
-.seat.general {
-  background: #1e3a8a;
+/* VIP CENTRO */
+.seat.vip-center {
+  border: 2px solid #facc15;
+  background: linear-gradient(180deg,#22c55e,#15803d);
+  box-shadow: 0 0 10px rgba(34,197,94,0.6);
 }
 
 /* HOVER */
@@ -610,20 +687,18 @@ onMounted(() => {
   transform: scale(1.1);
 }
 
-/* SELECCIONADO */
+/* SELECTED */
 .seat.selected {
   background: #facc15;
   color: #020617;
-  box-shadow:
-    0 0 10px rgba(250,204,21,0.7);
+  box-shadow: 0 0 12px rgba(250,204,21,0.8);
 }
 
-/* VENDIDO */
+/* SOLD */
 .seat.sold {
   background: #475569;
-  cursor: not-allowed;
   opacity: 0.5;
+  cursor: not-allowed;
 }
-
 
 </style>
