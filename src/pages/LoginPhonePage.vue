@@ -13,22 +13,58 @@
       </div>
 
       <h5 class="title">
-        ¿Digita tu<br />número telefónico?
+        Digita tu<br />número telefónico
       </h5>
 
       <p class="subtitle">
-        Te vamos a enviar un código para verificar que realmente eres tú.
+        Te enviaremos un código para verificar que realmente eres tú.
       </p>
 
-      <!-- PAÍS -->
-      <div class="country">
-        CL +56
+      <!-- PHONE INPUT PRO -->
+      <div class="phone-input-row">
+
+        <!-- SELECT PAÍS -->
+        <q-select
+          v-model="selectedCountry"
+          :options="countries"
+          option-label="label"
+          option-value="code"
+          emit-value
+          map-options
+          dense
+          borderless
+          class="country-select"
+        >
+          <!-- OPCIÓN -->
+          <template v-slot:option="scope">
+            <q-item v-bind="scope.itemProps">
+              <q-item-section avatar>
+                <span class="flag">{{ scope.opt.flag }}</span>
+              </q-item-section>
+              <q-item-section>
+                {{ scope.opt.name }} (+{{ scope.opt.code }})
+              </q-item-section>
+            </q-item>
+          </template>
+
+          <!-- SELECCIONADO -->
+          <template v-slot:selected>
+            <div class="row items-center no-wrap">
+              <span class="flag q-mr-xs">
+                {{ selectedCountryData.flag }}
+              </span>
+              +{{ selectedCountry }}
+            </div>
+          </template>
+        </q-select>
+
+        <!-- NÚMERO -->
+        <div class="phone-display">
+          {{ formattedPhone || '9 5558 4205' }}
+        </div>
+
       </div>
 
-      <!-- INPUT VISUAL -->
-      <div class="phone-display">
-        {{ formattedPhone || '9 5558 4205' }}
-      </div>
 
     </div>
 
@@ -68,6 +104,21 @@ const router = useRouter()
 
 const phone = ref('')
 
+const selectedCountry = ref('56')
+
+const countries = [
+  { name: 'Chile', code: '56', flag: '🇨🇱', label: 'Chile' },
+  { name: 'Perú', code: '51', flag: '🇵🇪', label: 'Perú' },
+  { name: 'México', code: '52', flag: '🇲🇽', label: 'México' },
+  { name: 'Colombia', code: '57', flag: '🇨🇴', label: 'Colombia' },
+  { name: 'Argentina', code: '54', flag: '🇦🇷', label: 'Argentina' },
+  { name: 'España', code: '34', flag: '🇪🇸', label: 'España' },
+]
+
+const selectedCountryData = computed(() =>
+  countries.find(c => c.code === selectedCountry.value)
+)
+
 const keys = [
   '1','2','3',
   '4','5','6',
@@ -96,9 +147,11 @@ const submit = async () => {
     return
   }
 
+  const fullPhone = selectedCountry.value + phone.value
+
   try {
     await api.post('/auth/send-otp', {
-      phone: phone.value
+      phone: fullPhone
     })
   } catch (error) {
     console.error(error)
@@ -109,7 +162,7 @@ const submit = async () => {
   // navegación fuera del try/catch
   router.push({
     name: 'verify-otp',
-    query: { phone: phone.value }
+    query: { phone: fullPhone }
   })
 }
 
@@ -191,5 +244,35 @@ const submit = async () => {
   background: #1e293b;
   transform: scale(0.96);
 }
+
+
+.phone-input-row {
+  display: flex;
+  align-items: center;
+  background: #0f172a;
+  border-radius: 16px;
+  padding: 12px 14px;
+  gap: 10px;
+}
+
+/* SELECT */
+.country-select {
+  min-width: 95px;
+  border-right: 1px solid #1e293b;
+  padding-right: 8px;
+}
+
+/* BANDERA */
+.flag {
+  font-size: 18px;
+}
+
+/* NÚMERO */
+.phone-display {
+  font-size: 1.9rem;
+  letter-spacing: 2px;
+  flex: 1;
+}
+
 
 </style>

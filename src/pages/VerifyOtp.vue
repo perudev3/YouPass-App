@@ -15,7 +15,7 @@
 
       <p class="subtitle">
         Enviamos un código SMS al número<br />
-        +56 {{ phone }}
+        +{{ phone }}
       </p>
 
         <div class="otp-display">

@@ -20,6 +20,13 @@ const routes = [
         meta: { hideHeader: true }
       },
 
+      {
+        path: 'register-profile',
+        name: 'register-profile',
+        component: () => import('pages/RegisterProfile.vue'),
+        meta: { hideHeader: true }
+      },
+
       // OTP
       {
         path: 'verify-otp',
