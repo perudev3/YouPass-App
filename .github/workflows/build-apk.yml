@@ -46,10 +46,6 @@ jobs:
       - name: Build Quasar Capacitor
         run: quasar build -m capacitor -T android
 
-      # 9️⃣ 🔥 AGREGAR ANDROID (SOLUCIONA TU ERROR)
-      - name: Add Android platform
-        run: npx cap add android
-
       # 🔟 Sync
       - name: Sync Capacitor
         run: npx cap sync android
