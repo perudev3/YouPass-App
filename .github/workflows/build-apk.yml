@@ -1,0 +1,55 @@
+name: Build APK
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+
+      # 1️⃣ Clonar repo
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2️⃣ Instalar Node
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      # 3️⃣ Instalar Quasar CLI
+      - name: Install Quasar CLI
+        run: npm install -g @quasar/cli
+
+      # 4️⃣ Instalar dependencias
+      - name: Install dependencies
+        run: npm install
+
+      # 5️⃣ Build Quasar + Capacitor
+      - name: Build Quasar
+        run: quasar build -m capacitor -T android
+
+      # 6️⃣ Instalar Java
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      # 7️⃣ Compilar APK (AQUÍ entra src-capacitor/android)
+      - name: Build APK Release
+        run: |
+          cd src-capacitor/android
+          chmod +x gradlew
+          ./gradlew assembleRelease
+
+      # 8️⃣ Subir APK como descarga
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: YouPass-APK
+          path: src-capacitor/android/app/build/outputs/apk/release/app-release.apk
