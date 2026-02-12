@@ -39,8 +39,12 @@ jobs:
         run: npm install
 
       # 7️⃣ Build Quasar + Capacitor
-      - name: Build Quasar Capacitor
-        run: quasar build -m capacitor -T android
+      - name: Build Quasar Web
+        run: quasar build
+
+      - name: Sync Capacitor
+        run: npx cap sync android
+
 
       # 8️⃣ Permisos gradlew
       - name: Fix gradlew permissions
