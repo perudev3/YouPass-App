@@ -13,13 +13,13 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      # 2️⃣ Node 20 (Capacitor 7)
+      # 2️⃣ Node
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
-      # 3️⃣ Java (OBLIGATORIO para Gradle)
+      # 3️⃣ Java
       - name: Setup JDK 17
         uses: actions/setup-java@v4
         with:
@@ -30,38 +30,41 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      # 5️⃣ Instalar Quasar
+      # 5️⃣ Quasar CLI
       - name: Install Quasar CLI
         run: npm install -g @quasar/cli
 
-        # Capacitor CLI
+      # 6️⃣ Capacitor CLI
       - name: Install Capacitor CLI
         run: npm install -g @capacitor/cli
 
-
-      # 6️⃣ Dependencias
+      # 7️⃣ Dependencias
       - name: Install dependencies
         run: npm install
 
-      # 7️⃣ Build Quasar + Capacitor
-      - name: Build Quasar Web
-        run: quasar build
+      # 8️⃣ 🔥 BUILD CAPACITOR (NO SPA)
+      - name: Build Quasar Capacitor
+        run: quasar build -m capacitor -T android
 
+      # 9️⃣ 🔥 AGREGAR ANDROID (SOLUCIONA TU ERROR)
+      - name: Add Android platform
+        run: npx cap add android
+
+      # 🔟 Sync
       - name: Sync Capacitor
         run: npx cap sync android
 
-
-      # 8️⃣ Permisos gradlew
+      # 11️⃣ Permisos gradlew
       - name: Fix gradlew permissions
         run: chmod +x src-capacitor/android/gradlew
 
-      # 9️⃣ Compilar APK
+      # 12️⃣ Compilar APK
       - name: Build APK Release
         run: |
           cd src-capacitor/android
           ./gradlew assembleRelease --no-daemon
 
-      # 🔟 Subir APK
+      # 13️⃣ Subir APK
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
