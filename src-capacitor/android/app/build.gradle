@@ -16,6 +16,7 @@ android {
             ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+<<<<<<< HEAD
     signingConfigs {
         release {
             storeFile file("mi-clave.jks")
@@ -24,11 +25,16 @@ android {
             keyPassword "samuel456"
         }
     }
+=======
+>>>>>>> 6f91d8d87a4ed2e2e3b2e46c13f69cb94a96af34
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+<<<<<<< HEAD
             signingConfig signingConfigs.release
+=======
+>>>>>>> 6f91d8d87a4ed2e2e3b2e46c13f69cb94a96af34
         }
     }
 }

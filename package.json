@@ -15,7 +15,11 @@
     "postinstall": "quasar prepare"
   },
   "dependencies": {
+<<<<<<< HEAD
     "@capacitor/cli": "^7.5.0",
+=======
+    "@capacitor/cli": "^8.1.0",
+>>>>>>> 6f91d8d87a4ed2e2e3b2e46c13f69cb94a96af34
     "@capacitor/core": "^8.1.0",
     "@quasar/extras": "^1.16.4",
     "axios": "^1.2.1",
