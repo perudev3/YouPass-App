@@ -31,6 +31,24 @@
           <span class="text-weight-bold">{{ user.user.name }}</span>
           <span class="text-caption">Mi perfil</span>
         </div>
+
+        <!-- MODO FIESTA SWITCH -->
+        <div v-if="isAuthenticated" class="fiesta-switch-container q-mx-md q-mb-sm">
+          <div class="fiesta-switch-row row items-center justify-between">
+            <div class="row items-center q-gutter-xs">
+              <span class="fiesta-label">Modo Fiesta</span>
+            </div>
+            <q-toggle
+              :model-value="modoFiesta"
+              color="amber"
+              keep-color
+              @update:model-value="toggleModoFiesta"
+            />
+          </div>
+          <div v-if="modoFiesta" class="fiesta-badge row items-center q-gutter-xs q-mt-xs">
+            <span class="fiesta-status-text">Activo · Listo para la fiesta 🎉</span>
+          </div>
+        </div>
       </div>
 
       <q-list padding>
@@ -44,30 +62,16 @@
 
         <q-item clickable to="/my-tickets">
           <q-item-section avatar>
-            <q-icon name="ticket" />
+            <q-icon name="confirmation_number" />
           </q-item-section>
-          <q-item-section>Mis Entradas</q-item-section>
+          <q-item-section>Mis Tickets</q-item-section>
         </q-item>
 
-        <q-item clickable to="/entrada-general">
+        <q-item clickable to="/my-invitations">
           <q-item-section avatar>
             <q-icon name="confirmation_number" />
           </q-item-section>
-          <q-item-section>Compra Entrada General</q-item-section>
-        </q-item>
-
-        <q-item clickable to="/entrada-vip">
-          <q-item-section avatar>
-            <q-icon name="stars" />
-          </q-item-section>
-          <q-item-section>Compra Entrada VIP</q-item-section>
-        </q-item>
-
-        <q-item clickable to="/modo-fiesta">
-          <q-item-section avatar>
-            <q-icon name="celebration" />
-          </q-item-section>
-          <q-item-section>Modo Fiesta</q-item-section>
+          <q-item-section>Mis Invitaciones</q-item-section>
         </q-item>
 
         <q-separator spaced />
@@ -100,6 +104,8 @@
     </q-drawer>
 
 
+    
+
     <!-- PÁGINAS -->
     <q-page-container>
       <router-view />
@@ -112,6 +118,7 @@
 import { ref, computed, onMounted,onUnmounted, watch} from 'vue'
 import {  useRouter } from 'vue-router'
 import { api } from 'boot/axios' 
+import Swal from 'sweetalert2'
 
 const leftDrawerOpen = ref(false)
 const router = useRouter()
@@ -120,6 +127,93 @@ const token = ref(localStorage.getItem('token'))
 const user = ref(null)
 const loadingAuth = ref(true)
 
+
+// Modo Fiesta — basado en el dato del usuario
+const modoFiesta = computed({
+  get: () => !!user.value?.user?.mood_partty,
+  set: (val) => {
+    if (user.value?.user) {
+      user.value.user.mood_partty = val ? 1 : 0
+    }
+  }
+})
+
+const toggleModoFiesta = async (val) => {
+  if (val) {
+    try {
+      const res = await api.post('/auth/mood_partty/status', { mood_partty: 1 })
+
+      if (res.data.status === 'success') {
+        if (user.value?.user) {
+          user.value.user.mood_partty = 1
+        }
+        window.dispatchEvent(new CustomEvent('modo-fiesta-changed', { detail: true }))
+
+        await Swal.fire({
+          title: '¡Modo Fiesta Activado! 🎉',
+          text: res.data.message,
+          icon: 'success',
+          confirmButtonText: '¡Vamos!',
+          confirmButtonColor: '#FFC220',
+          background: '#0F172A',
+          color: '#E5E7EB',
+          iconColor: '#4ADE80',
+          customClass: {
+            popup: 'swal-dark-popup',
+            confirmButton: 'swal-confirm-btn',
+          }
+        })
+
+      }
+    } catch (error) {
+      // El backend retorna error — el usuario no tiene entradas
+      const msg = error.response?.data?.message || 'Compra entradas de algún evento para activar Modo Fiesta'
+
+      if (user.value?.user) {
+        user.value.user.mood_partty = 0
+      }
+
+      const result = await Swal.fire({
+        title: 'Modo Fiesta 🎟️',
+        text: msg,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Ver Eventos',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#FFC220',
+        cancelButtonColor: '#374151',
+        background: '#0F172A',
+        color: '#E5E7EB',
+        iconColor: '#FFC220',
+        customClass: {
+          popup: 'swal-dark-popup',
+          confirmButton: 'swal-confirm-btn',
+        }
+      })
+
+      if (result.isConfirmed) {
+        router.push('/home')
+        leftDrawerOpen.value = false
+      }
+    }
+
+    return
+  }
+
+  // Desactivar
+  try {
+    await api.post('/auth/mood_partty/status', { mood_partty: 0 })
+    if (user.value?.user) {
+      user.value.user.mood_partty = 0
+    }
+    window.dispatchEvent(new CustomEvent('modo-fiesta-changed', { detail: false }))
+  } catch (error) {
+    console.error('Error desactivando mood:', error)
+    if (user.value?.user) {
+      user.value.user.mood_partty = 1
+    }
+  }
+}
 const loadUser = async () => {
   if (!token.value) {
     user.value = null
@@ -424,7 +518,7 @@ onUnmounted(() => {
    SEPARADORES
 ========================================================= */
 .q-separator {
-  background: #1F2937;
+  background: #000000;
   height: 1px;
   opacity: 1;
 }
@@ -539,4 +633,55 @@ onUnmounted(() => {
 }
 
 
+/* =========================================================
+   MODO FIESTA SWITCH
+========================================================= */
+.fiesta-switch-container {
+  background: linear-gradient(135deg, #111827, #020617);
+  border: 1px solid rgba(255, 194, 32, 0.18);
+  border-radius: 14px;
+  padding: 10px 14px;
+  transition: all 0.3s ease;
+}
+
+.fiesta-switch-container:hover {
+  border-color: rgba(255, 194, 32, 0.35);
+  box-shadow: 0 0 10px rgba(255, 194, 32, 0.12);
+}
+
+.fiesta-switch-row {
+  width: 100%;
+}
+
+.fiesta-icon {
+  color: #FFC220 !important;
+  filter: drop-shadow(0 0 4px rgba(255, 194, 32, 0.5));
+}
+
+.fiesta-label {
+  color: #E5E7EB;
+  font-size: 0.88rem;
+  font-weight: 500;
+  letter-spacing: 0.2px;
+}
+
+.fiesta-badge {
+  padding-left: 2px;
+}
+
+.fiesta-dot {
+  color: #4ADE80 !important;
+  animation: pulse-dot 1.5s ease-in-out infinite;
+}
+
+.fiesta-status-text {
+  color: #9CA3AF;
+  font-size: 0.72rem;
+  letter-spacing: 0.2px;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
 </style>

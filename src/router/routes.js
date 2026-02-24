@@ -53,6 +53,15 @@ const routes = [
         component: () => import('pages/MyTickets.vue')
       },
       {
+        path: '/my-tickets/:ticketId/invitations',
+        component: () => import('pages/InvitationsPage.vue')
+      },
+      {
+        path: 'my-invitations',
+        name: 'my-invitations',
+        component: () => import('pages/MyInvitationsPage.vue')
+      },
+      {
         path: 'ticket',
         name: 'ticket-detail',
         component: () => import('pages/TicketDetail.vue')

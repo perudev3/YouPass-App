@@ -21,25 +21,15 @@
     <div class="section-title">Acceso socio</div>
 
     <div class="socio-grid">
-        <q-card flat class="socio-card">
-            <q-icon name="confirmation_number" size="28px" />
-            <div class="socio-text">Mis Tickets</div>
-        </q-card>
+      <q-card flat class="socio-card" @click="router.push('/my-tickets')">
+        <q-icon name="confirmation_number" size="28px" />
+        <div class="socio-text">Mis Tickets</div>
+      </q-card>
 
-        <q-card flat class="socio-card">
-            <q-icon name="celebration" size="28px" />
-            <div class="socio-text">Modo Fiesta</div>
-        </q-card>
-
-        <q-card flat class="socio-card">
-            <q-icon name="table_bar" size="28px" />
-            <div class="socio-text">Compra Mesa VIP</div>
-        </q-card>
-
-        <q-card flat class="socio-card">
-            <q-icon name="headphones" size="28px" />
-            <div class="socio-text">Compra DJ VIP</div>
-        </q-card>
+   <!--    <q-card flat class="socio-card" @click="router.push('/modo-fiesta')">
+        <q-icon name="celebration" size="28px" />
+        <div class="socio-text">Modo Fiesta</div>
+      </q-card> -->
     </div>
 
 <!-- =========================
@@ -64,7 +54,8 @@
           :class="{ selected: seat.selected, sold: seat.sold }"
           @click="toggleSeat(seat, 'vipCenter')"
         >
-          {{ seat.label }}
+          <span v-if="seat.sold" class="sold-x">✕</span>
+          <span v-else>{{ seat.label }}</span>
         </div>
 
       </div>
@@ -89,7 +80,8 @@
                 :class="{ selected: seat.selected, sold: seat.sold }"
                 @click="toggleSeat(seat, 'vipLeft')"
               >
-                {{ seat.label }}
+                <span v-if="seat.sold" class="sold-x">✕</span>  <!-- 🔥 -->
+                <span v-else>{{ seat.label }}</span>
               </div>
           </div>
         </div>
@@ -124,7 +116,8 @@
               :class="{ selected: seat.selected, sold: seat.sold }"
               @click="toggleSeat(seat, 'vipRight')"
             >
-              {{ seat.label }}
+              <span v-if="seat.sold" class="sold-x">✕</span>  <!-- 🔥 -->
+              <span v-else>{{ seat.label }}</span>
             </div>
           </div>
         </div>
@@ -283,16 +276,18 @@ const total = computed(() => {
 const loadEvent = async () => {
   try {
     const { id } = route.params
-
-   const res = await api.get(`/auth/events/${id}`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
-      }
-    )
+    const res = await api.get(`/auth/events/${id}`, {
+      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+    })
 
     event.value = res.data
     tickets.value = res.data.ticket_types || []
+
+    // 🔥 Marcar asientos vendidos
+    const soldSeats = res.data.sold_seats || []
+    vipSeats.value.forEach(seat => {
+      seat.sold = soldSeats.includes(seat.id)
+    })
 
   } catch (error) {
     console.error('Error cargando evento', error)
@@ -324,34 +319,27 @@ const removeTicket = (ticket) => {
 
 
 const buyTickets = async () => {
-  if (total.value === 0) {
-    alert('Selecciona al menos una entrada')
-    return
-  }
+  if (total.value === 0) return alert('Selecciona al menos una entrada')
 
-  try {
-    const res = await api.post('/auth/purchases',
-      {
-        event_id: Number(event.value.id),
-        items: cart.value,
-        total: total.value
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
-      }
-    )
+  // 🔥 Recopilar asientos seleccionados
+  const selectedSeats = vipSeats.value
+    .filter(s => s.selected)
+    .map(s => s.id)  // ["VIP-1", "VIP-5"]
 
-    if (res.data.success) {
-      alert('Compra realizada con éxito 🎉')
-      cart.value = {}
-      router.push('/my-tickets')
-    }
+  const res = await api.post('/auth/purchases',
+    {
+      event_id: Number(event.value.id),
+      items: cart.value,
+      total: total.value,
+      seats: selectedSeats  // 🔥
+    },
+    { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
+  )
 
-  } catch (error) {
-    console.error(error)
-    alert('Error al comprar')
+  if (res.data.success) {
+    alert('Compra realizada con éxito 🎉')
+    cart.value = {}
+    router.push('/my-tickets')
   }
 }
 
@@ -701,4 +689,10 @@ onMounted(() => {
   cursor: not-allowed;
 }
 
+
+.sold-x {
+  color: #ef4444;
+  font-size: 0.9rem;
+  font-weight: 900;
+}
 </style>

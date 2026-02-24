@@ -28,9 +28,6 @@
           v-model="selectedCountry"
           :options="countries"
           option-label="label"
-          option-value="code"
-          emit-value
-          map-options
           dense
           borderless
           class="country-select"
@@ -51,9 +48,9 @@
           <template v-slot:selected>
             <div class="row items-center no-wrap">
               <span class="flag q-mr-xs">
-                {{ selectedCountryData.flag }}
+                {{ selectedCountry.flag }}
               </span>
-              +{{ selectedCountry }}
+              +{{ selectedCountry.code }}
             </div>
           </template>
         </q-select>
@@ -72,11 +69,11 @@
     <div class="keypad">
 
       <div
-        v-for="key in keys"
-        :key="key"
-        class="key"
-        @click="pressKey(key)"
-      >
+          v-for="(key, index) in keys"
+          :key="index"
+          class="key"
+          @click="pressKey(key)"
+        >
         <span v-if="key !== 'del'">{{ key }}</span>
         <q-icon v-else name="backspace" size="22px" />
       </div>
@@ -104,8 +101,6 @@ const router = useRouter()
 
 const phone = ref('')
 
-const selectedCountry = ref('56')
-
 const countries = [
   { name: 'Chile', code: '56', flag: '🇨🇱', label: 'Chile' },
   { name: 'Perú', code: '51', flag: '🇵🇪', label: 'Perú' },
@@ -115,9 +110,7 @@ const countries = [
   { name: 'España', code: '34', flag: '🇪🇸', label: 'España' },
 ]
 
-const selectedCountryData = computed(() =>
-  countries.find(c => c.code === selectedCountry.value)
-)
+const selectedCountry = ref(countries[0])
 
 const keys = [
   '1','2','3',
@@ -147,17 +140,25 @@ const submit = async () => {
     return
   }
 
-  const fullPhone = selectedCountry.value + phone.value
-
+const fullPhone = selectedCountry.value.code + phone.value
   try {
     await api.post('/auth/send-otp', {
       phone: fullPhone
     })
   } catch (error) {
-    console.error(error)
-    alert('No se pudo enviar el código')
-    return
+  alert("ERROR COMPLETO:", error)
+
+  if (error.response) {
+    alert(
+      "STATUS: " + error.response.status +
+      "\nDATA: " + JSON.stringify(error.response.data)
+    )
+  } else {
+    alert("ERROR SIN RESPONSE: " + error.message)
   }
+
+  return
+}
 
   // navegación fuera del try/catch
   router.push({

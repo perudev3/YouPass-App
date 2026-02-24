@@ -1,0 +1,13 @@
+{
+  "name": "youpass",
+  "version": "0.0.1",
+  "description": "App para eventos y compras",
+  "author": "Alejandro Ruiz",
+  "private": true,
+  "dependencies": {
+    "@capacitor/android": "^7.5.0",
+    "@capacitor/app": "^7.0.0",
+    "@capacitor/cli": "^7.0.0",
+    "@capacitor/core": "^7.0.0"
+  }
+}

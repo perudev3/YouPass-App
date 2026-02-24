@@ -48,6 +48,15 @@
         >
           {{ statusLabel(ticket.status) }}
         </div>
+
+        <q-btn
+          v-if="ticket.ticket_type.toLowerCase().includes('vip')"
+          unelevated
+          class="invite-btn"
+          icon="group_add"
+          label="Gestionar invitados"
+          @click="router.push(`/my-tickets/${ticket.id}/invitations`)"
+        />
       </div>
 
       <!-- QR -->
@@ -297,5 +306,12 @@ onMounted(loadTickets)
   background: #F5B300;
 }
 
-
+.invite-btn {
+  background: #1e3a5f;
+  color: #facc15;
+  font-weight: 800;
+  border-radius: 10px;
+  margin-top: 10px;
+  width: 100%;
+}
 </style>
