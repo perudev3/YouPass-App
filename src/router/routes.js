@@ -65,7 +65,12 @@ const routes = [
         path: 'ticket',
         name: 'ticket-detail',
         component: () => import('pages/TicketDetail.vue')
-      }
+      },
+      {
+        path: 'configurations',
+        name: 'configurations',
+        component: () => import('pages/Configurations.vue')
+      },
     ]
   }
 ]

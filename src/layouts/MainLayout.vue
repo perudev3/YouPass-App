@@ -7,6 +7,8 @@
       class="top-bar"
     >
       <q-toolbar class="row items-center justify-between q-px-md">
+
+        <!-- BOTÓN MENU -->
         <q-btn
           flat
           round
@@ -14,9 +16,28 @@
           color="white"
           @click="leftDrawerOpen = true"
         />
-        <span class="logo">
-          <img src="/logo-sin-fondo.png" width="120" />
-        </span>
+
+        <!-- LOGO + MODO FIESTA -->
+        <div class="row items-center q-gutter-sm">
+
+          <!-- MODO FIESTA -->
+          <q-toggle
+            v-if="isAuthenticated"
+            :model-value="modoFiesta"
+            color="amber"
+            keep-color
+            icon="celebration"
+            @update:model-value="toggleModoFiesta"
+          />
+
+          <span class="logo">
+            <img src="/logo-sin-fondo.png" width="120" />
+          </span>
+
+          
+
+        </div>
+
       </q-toolbar>
     </q-header>
 
@@ -30,24 +51,6 @@
         <div class="column">
           <span class="text-weight-bold">{{ user.user.name }}</span>
           <span class="text-caption">Mi perfil</span>
-        </div>
-
-        <!-- MODO FIESTA SWITCH -->
-        <div v-if="isAuthenticated" class="fiesta-switch-container q-mx-md q-mb-sm">
-          <div class="fiesta-switch-row row items-center justify-between">
-            <div class="row items-center q-gutter-xs">
-              <span class="fiesta-label">Modo Fiesta</span>
-            </div>
-            <q-toggle
-              :model-value="modoFiesta"
-              color="amber"
-              keep-color
-              @update:model-value="toggleModoFiesta"
-            />
-          </div>
-          <div v-if="modoFiesta" class="fiesta-badge row items-center q-gutter-xs q-mt-xs">
-            <span class="fiesta-status-text">Activo · Listo para la fiesta 🎉</span>
-          </div>
         </div>
       </div>
 
@@ -76,7 +79,7 @@
 
         <q-separator spaced />
 
-        <q-item clickable to="/configuracion">
+        <q-item clickable to="/configurations">
           <q-item-section avatar>
             <q-icon name="settings" />
           </q-item-section>
@@ -92,7 +95,7 @@
           <q-item-section avatar>
             <q-icon name="logout" />
           </q-item-section>
-          <q-item-section>Salir</q-item-section>
+          <q-item-section>Cerrar Sesión</q-item-section>
         </q-item>
       </q-list>
 
@@ -102,9 +105,6 @@
       </div>
 
     </q-drawer>
-
-
-    
 
     <!-- PÁGINAS -->
     <q-page-container>
@@ -147,6 +147,8 @@ const toggleModoFiesta = async (val) => {
         if (user.value?.user) {
           user.value.user.mood_partty = 1
         }
+
+        localStorage.setItem('modoFiesta', true)
         window.dispatchEvent(new CustomEvent('modo-fiesta-changed', { detail: true }))
 
         await Swal.fire({
@@ -206,6 +208,8 @@ const toggleModoFiesta = async (val) => {
     if (user.value?.user) {
       user.value.user.mood_partty = 0
     }
+
+    localStorage.setItem('modoFiesta', false)
     window.dispatchEvent(new CustomEvent('modo-fiesta-changed', { detail: false }))
   } catch (error) {
     console.error('Error desactivando mood:', error)
@@ -214,6 +218,7 @@ const toggleModoFiesta = async (val) => {
     }
   }
 }
+
 const loadUser = async () => {
   if (!token.value) {
     user.value = null

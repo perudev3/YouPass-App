@@ -89,6 +89,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { api } from 'boot/axios'
+import Swal from 'sweetalert2'
 
 const route = useRoute()
 const router = useRouter()
@@ -128,27 +129,55 @@ const openAssign = (inv) => {
 const assignPhone = async () => {
   if (!inputPhone.value) return
 
-  const res = await api.post(
-    `/auth/invitations/${selectedInv.value.id}/assign`,
-    { phone: inputPhone.value },
-    { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
-  )
+  try {
+    const res = await api.post(
+      `/auth/invitations/${selectedInv.value.id}/assign`,
+      { phone: inputPhone.value },
+      { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
+    )
 
-  if (res.data.success) {
-    selectedInv.value.guest_phone = inputPhone.value
-    selectedInv.value.status = 'sent'
-    selectedInv.value.link = res.data.link
     showDialog.value = false
 
-    // 🔥 Abrir WhatsApp directo
-    shareWhatsApp(selectedInv.value)
+    if (res.data.success) {
+      selectedInv.value.guest_phone = inputPhone.value
+      selectedInv.value.status = 'sent'
+
+      if (res.data.whatsapp) {
+        await Swal.fire({
+          icon: 'success',
+          title: '¡Invitación enviada!',
+          text: `Se envió el WhatsApp a ${res.data.phone}`,
+          background: '#0f172a',
+          color: '#ffffff',
+          confirmButtonColor: '#facc15',
+          confirmButtonText: 'OK'
+        })
+      } else {
+        await Swal.fire({
+          icon: 'warning',
+          title: 'Invitación guardada',
+          text: 'Pero no se pudo enviar el WhatsApp. Intenta reenviar.',
+          background: '#0f172a',
+          color: '#ffffff',
+          confirmButtonColor: '#facc15',
+          confirmButtonText: 'Entendido'
+        })
+      }
+    }
+  } catch (e) {
+    console.error(e)
+    await Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: 'No se pudo asignar el invitado. Intenta de nuevo.',
+      background: '#0f172a',
+      color: '#ffffff',
+      confirmButtonColor: '#ef4444',
+      confirmButtonText: 'Cerrar'
+    })
   }
 }
 
-const shareWhatsApp = (inv) => {
-  const msg = `¡Te invitaron al evento! Accede a tu QR aquí: ${inv.link}`
-  window.open(`https://wa.me/${inv.guest_phone}?text=${encodeURIComponent(msg)}`)
-}
 
 onMounted(loadInvitations)
 </script>

@@ -146,19 +146,18 @@ const fullPhone = selectedCountry.value.code + phone.value
       phone: fullPhone
     })
   } catch (error) {
-  alert("ERROR COMPLETO:", error)
+    
+    if (error.response) {
+      alert(
+        "STATUS: " + error.response.status +
+        "\nDATA: " + JSON.stringify(error.response.data)
+      )
+    } else {
+      alert("ERROR SIN RESPONSE: " + error.message)
+    }
 
-  if (error.response) {
-    alert(
-      "STATUS: " + error.response.status +
-      "\nDATA: " + JSON.stringify(error.response.data)
-    )
-  } else {
-    alert("ERROR SIN RESPONSE: " + error.message)
+    return
   }
-
-  return
-}
 
   // navegación fuera del try/catch
   router.push({
@@ -174,7 +173,7 @@ const fullPhone = selectedCountry.value.code + phone.value
 .login-page {
   background: #020617;
   color: white;
-  height: 100vh;
+ height: 100dvh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -182,7 +181,7 @@ const fullPhone = selectedCountry.value.code + phone.value
 
 /* ---------- CONTENIDO SUPERIOR ---------- */
 .q-pa-lg {
-  flex-shrink: 0;
+   margin-bottom: 8px;
 }
 
 .back-btn {
@@ -192,12 +191,14 @@ const fullPhone = selectedCountry.value.code + phone.value
 .title {
   font-weight: 800;
   line-height: 1.25;
+  font-size: clamp(1.1rem, 4vw, 1.5rem); /* ← se adapta al ancho */
+  margin: 0 0 4px;
 }
 
 .subtitle {
   color: #94a3b8;
-  font-size: 0.85rem;
-  margin: 10px 0 16px;
+  font-size: clamp(0.75rem, 3vw, 0.85rem);
+  margin: 6px 0 10px;
 }
 
 .country {
@@ -252,13 +253,13 @@ const fullPhone = selectedCountry.value.code + phone.value
   align-items: center;
   background: #0f172a;
   border-radius: 16px;
-  padding: 12px 14px;
+  padding: 10px 14px;
   gap: 10px;
 }
 
 /* SELECT */
 .country-select {
-  min-width: 95px;
+  min-width: 90px;
   border-right: 1px solid #1e293b;
   padding-right: 8px;
 }
@@ -270,10 +271,46 @@ const fullPhone = selectedCountry.value.code + phone.value
 
 /* NÚMERO */
 .phone-display {
-  font-size: 1.9rem;
+  font-size: clamp(1.3rem, 5vw, 1.9rem); /* ← se adapta */
   letter-spacing: 2px;
   flex: 1;
 }
 
+/* ---------- KEYPAD ---------- */
+.keypad {
+  flex: 1;
+  min-height: 0; /* ← crítico: evita que crezca fuera del flex container */
+  padding: 8px 16px 12px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(4, 1fr) auto;
+  gap: 8px;
+}
+
+.key {
+  background: #0f172a;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(1rem, 4vw, 1.4rem); /* ← se adapta */
+  user-select: none;
+  max-height: 72px; /* ← evita teclas gigantes en pantallas altas */
+  cursor: pointer;
+}
+
+.key:active {
+  background: #1e293b;
+  transform: scale(0.96);
+}
+
+.btn-next {
+  grid-column: span 3;
+  height: 48px;
+  background: white;
+  color: black;
+  font-weight: 700;
+  max-height: 48px;
+}
 
 </style>

@@ -7,12 +7,7 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-<<<<<<< HEAD
-        android:theme="@style/AppTheme"
-        android:usesCleartextTraffic="true">
-=======
         android:theme="@style/AppTheme">
->>>>>>> 6f91d8d87a4ed2e2e3b2e46c13f69cb94a96af34
 
         <activity
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode|navigation"

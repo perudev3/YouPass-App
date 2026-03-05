@@ -177,6 +177,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import Swal from 'sweetalert2'
 import { api } from 'boot/axios' 
 
 const route = useRoute()
@@ -319,27 +320,66 @@ const removeTicket = (ticket) => {
 
 
 const buyTickets = async () => {
-  if (total.value === 0) return alert('Selecciona al menos una entrada')
+  if (total.value === 0) {
+    await Swal.fire({
+      title: 'Sin entradas',
+      text: 'Selecciona al menos una entrada para continuar.',
+      icon: 'warning',
+      confirmButtonText: 'Entendido',
+      confirmButtonColor: '#FFC220',
+      background: '#0F172A',
+      color: '#E5E7EB',
+      iconColor: '#FFC220',
+    })
+    return
+  }
 
-  // 🔥 Recopilar asientos seleccionados
   const selectedSeats = vipSeats.value
     .filter(s => s.selected)
-    .map(s => s.id)  // ["VIP-1", "VIP-5"]
+    .map(s => s.id)
 
-  const res = await api.post('/auth/purchases',
-    {
-      event_id: Number(event.value.id),
-      items: cart.value,
-      total: total.value,
-      seats: selectedSeats  // 🔥
-    },
-    { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
-  )
+  try {
+    const res = await api.post('/auth/purchases',
+      {
+        event_id: Number(event.value.id),
+        items: cart.value,
+        total: total.value,
+        seats: selectedSeats
+      },
+      { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
+    )
 
-  if (res.data.success) {
-    alert('Compra realizada con éxito 🎉')
-    cart.value = {}
-    router.push('/my-tickets')
+    if (res.data.success) {
+      await Swal.fire({
+        title: '¡Compra exitosa! 🎉',
+        html: `
+          <p style="color:#9CA3AF; margin-bottom:8px">Tu entrada está lista</p>
+          <p style="color:#FFC220; font-size:1.4rem; font-weight:900">S/ ${total.value}</p>
+        `,
+        icon: 'success',
+        confirmButtonText: 'Ver mis tickets',
+        confirmButtonColor: '#FFC220',
+        background: '#0F172A',
+        color: '#E5E7EB',
+        iconColor: '#4ADE80',
+      })
+
+      cart.value = {}
+      router.push('/my-tickets')
+    }
+  } catch (error) {
+    const msg = error.response?.data?.message || 'Ocurrió un error al procesar tu compra.'
+
+    await Swal.fire({
+      title: 'Error en la compra',
+      text: msg,
+      icon: 'error',
+      confirmButtonText: 'Intentar de nuevo',
+      confirmButtonColor: '#FFC220',
+      background: '#0F172A',
+      color: '#E5E7EB',
+      iconColor: '#EF4444',
+    })
   }
 }
 
