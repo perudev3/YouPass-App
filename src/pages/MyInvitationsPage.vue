@@ -130,9 +130,7 @@ watch(invitations, async () => {
 
 const loadInvitations = async () => {
   try {
-    const res = await api.get('/auth/my-invitations', {
-      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-    })
+    const res = await api.get('/auth/my-invitations')
     invitations.value = res.data
     // 🔥 Ya no necesitas generar QRs aquí, el :ref lo hace solo
 
@@ -145,11 +143,7 @@ const loadInvitations = async () => {
 
 const respond = async (inv, status) => {
   try {
-    const res = await api.post(
-      `/auth/invitations/${inv.id}/respond`,
-      { status },
-      { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
-    )
+    const res = await api.post(`/auth/invitations/${inv.id}/respond`, { status })
 
     if (res.data.success) {
       inv.status = status

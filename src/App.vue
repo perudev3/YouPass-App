@@ -2,8 +2,17 @@
   <router-view />
 </template>
 
-<script setup>
-// Aquí no necesitas nada más
+<script>
+export default {
+  name: 'App',
+  
+  created() {
+    window.onerror = function(msg, src, line, col, err) {
+      document.body.style.cssText = 'padding:20px;background:white;';
+      document.body.innerHTML = '<b style="color:red">ERROR:</b><br>' + msg + '<br><br>' + (err?.stack || '');
+    };
+  }
+}
 </script>
 
 <style>

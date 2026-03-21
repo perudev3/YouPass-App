@@ -102,7 +102,6 @@
         <div class="section-label row items-center q-gutter-xs q-mb-md">
           <q-icon name="credit_card" size="16px" class="section-label-icon" />
           <span>Métodos de Pago</span>
-          <q-badge class="beta-badge q-ml-xs">Próximamente</q-badge>
         </div>
 
         <!-- TARJETAS GUARDADAS -->
@@ -388,12 +387,21 @@ const saveCard = async () => {
     return
   }
 
+  if(!detectedBrand.value){
+    Swal.fire({
+      title:'Tarjeta no reconocida',
+      text:'Solo aceptamos Visa, Mastercard o Amex',
+      icon:'warning'
+    })
+    return
+  }
+
   saving.value.card = true
 
   try {
 
     const res = await api.post('/auth/cards',{
-      brand: detectedBrand.value,
+      brand: detectedBrand.value.toLowerCase(),
       last4: raw.slice(-4),
       expiry: newCard.value.expiry,
       holder: newCard.value.holder,
@@ -402,24 +410,10 @@ const saveCard = async () => {
 
     savedCards.value.push(res.data)
 
-    newCard.value = {
-      number:'',
-      holder:'',
-      expiry:'',
-      cvv:'',
-      isDefault:false
-    }
-
-    Swal.fire({
-      title:'Tarjeta guardada',
-      icon:'success'
-    })
-
   } catch(e){
     console.error(e)
-  } finally {
-    saving.value.card = false
   }
+
 }
 
 const removeCard = (i) => {
@@ -464,11 +458,13 @@ const removeCard = (i) => {
 }
 
 const loadCards = async () => {
-
-  const res = await api.get('/auth/cards')
-
-  savedCards.value = res.data
-
+  try {
+    const res = await api.get('/auth/cards')
+    savedCards.value = res.data.cards ?? []
+  } catch (e) {
+    console.error('Error cargando tarjetas:', e)
+    savedCards.value = [] // valor seguro por defecto
+  }
 }
 
 onMounted(() => {

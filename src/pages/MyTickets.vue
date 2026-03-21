@@ -15,13 +15,7 @@
       <p>No tienes tickets aún</p>
     </div>
 
-    <q-card
-      v-for="ticket in tickets"
-      :key="ticket.id"
-      flat
-      class="ticket-card"
-      :data-ticket="ticket.id"
-    >
+    <q-card v-for="ticket in tickets" :key="ticket.id" flat class="ticket-card" :data-ticket="ticket.id">
       <!-- EVENT IMAGE -->
       <div class="event-img">
         <img :src="ticket.event.image" />
@@ -42,21 +36,12 @@
           {{ ticket.ticket_type }}
         </div>
 
-        <div
-          class="status"
-          :class="ticket.status"
-        >
+        <div class="status" :class="ticket.status">
           {{ statusLabel(ticket.status) }}
         </div>
 
-        <q-btn
-          v-if="ticket.ticket_type.toLowerCase().includes('vip')"
-          unelevated
-          class="invite-btn"
-          icon="group_add"
-          label="Gestionar invitados"
-          @click="router.push(`/my-tickets/${ticket.id}/invitations`)"
-        />
+        <q-btn v-if="ticket.ticket_type.toLowerCase().includes('vip')" unelevated class="invite-btn" icon="group_add"
+          label="Gestionar invitados" @click="router.push(`/my-tickets/${ticket.id}/invitations`)" />
       </div>
 
       <!-- QR -->
@@ -65,20 +50,9 @@
         <!-- QR GENERADO -->
         <div class="qr-box" v-if="ticket.qr || ticket.code">
 
-          <QRCode
-            :value="ticket.qr || ticket.code"
-            :size="140"
-            level="H"
-            :ref="setQrRef(ticket.id)"
-          />
+          <QRCode :value="ticket.qr || ticket.code" :size="140" level="H" :ref="setQrRef(ticket.id)" />
 
-          <q-btn
-            label="Descargar"
-            icon="download"
-            size="sm"
-            class="download-btn"
-            @click="downloadQR(ticket)"
-          />
+          <q-btn label="Descargar" icon="download" size="sm" class="download-btn" @click="downloadQR(ticket)" />
         </div>
 
       </div>
@@ -89,8 +63,8 @@
   </q-page>
 </template>
 <script setup>
-import { ref, onMounted  } from 'vue'
-import { api } from 'boot/axios' 
+import { ref, onMounted } from 'vue'
+import { api } from 'boot/axios'
 import { useRouter } from 'vue-router'
 
 import QRCode from 'qrcode'
@@ -104,23 +78,8 @@ const qrRefs = ref({})
 
 
 const loadTickets = async () => {
-  const token = localStorage.getItem('token')
-
-  if (!token) {
-    router.push('/login-phone')
-    return
-  }
-
   try {
-    const res = await api.get(
-      '/auth/my-tickets',
-      {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      }
-    )
-
+    const res = await api.get('/auth/my-tickets')
     tickets.value = res.data
   } catch (error) {
     console.error(error)
@@ -129,6 +88,7 @@ const loadTickets = async () => {
     loading.value = false
   }
 }
+
 
 const statusLabel = (status) => {
   if (status === 'valid') return 'Válido'
@@ -290,8 +250,8 @@ onMounted(loadTickets)
   border-radius: 12px;
 
   box-shadow:
-    0 0 10px rgba(0,0,0,0.4),
-    0 0 18px rgba(255,194,32,0.25);
+    0 0 10px rgba(0, 0, 0, 0.4),
+    0 0 18px rgba(255, 194, 32, 0.25);
 }
 
 /* Botón descargar */

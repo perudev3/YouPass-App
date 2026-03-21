@@ -1,45 +1,79 @@
 import { boot } from 'quasar/wrappers'
 import axios from 'axios'
+import { Preferences } from '@capacitor/preferences'
+import { Platform } from 'quasar'
 
 const api = axios.create({
   //baseURL: 'http://127.0.0.1:8000/api'
   baseURL: 'https://srv1364430.hstgr.cloud/api'
 })
 
-export default boot(({ app }) => {
+export default boot(async ({ app, router }) => {
 
-  // 🔹 INTERCEPTOR PARA AGREGAR TOKEN
-  api.interceptors.request.use((config) => {
+  let token = null
 
-    const token = localStorage.getItem('token')
+  try {
+    if (Platform.is.capacitor) {
+      // SOLO en móvil
+      const res = await Preferences.get({ key: 'token' })
+      token = res.value
+    } else {
+      // fallback web
+      token = localStorage.getItem('token')
+    }
+  } catch (e) {
+    console.error('Error obteniendo token:', e)
+  }
 
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`
+  if (token) {
+    api.defaults.headers.common['Authorization'] = `Bearer ${token}`
+  }
+
+  api.interceptors.request.use(async (config) => {
+    try {
+      let token = null
+
+      if (Platform.is.capacitor) {
+        const res = await Preferences.get({ key: 'token' })
+        token = res.value
+      } else {
+        token = localStorage.getItem('token')
+      }
+
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`
+      }
+    } catch (e) {
+      console.error('Error interceptor:', e)
     }
 
     return config
   })
 
-
-  // 🔹 INTERCEPTOR PARA TOKEN EXPIRADO
   api.interceptors.response.use(
     response => response,
-    error => {
+    async error => {
+      if (
+        error.response &&
+        error.response.status === 401 &&
+        error.config.url.includes('/auth/me')
+      ) {
+        if (Platform.is.capacitor) {
+          await Preferences.remove({ key: 'token' })
+          await Preferences.remove({ key: 'user' })
+        } else {
+          localStorage.removeItem('token')
+          localStorage.removeItem('user')
+        }
 
-      if (error.response && error.response.status === 401) {
-        localStorage.removeItem('token')
-        localStorage.removeItem('user')
-
-        window.location.href = '/'
+        router.replace('/')
       }
-
       return Promise.reject(error)
     }
   )
 
   app.config.globalProperties.$axios = axios
   app.config.globalProperties.$api = api
-
 })
 
 export { api }

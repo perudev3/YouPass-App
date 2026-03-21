@@ -39,37 +39,44 @@ const routes = [
       {
         path: 'home',
         name: 'home',
-        component: () => import('pages/IndexPage.vue')
+        component: () => import('pages/IndexPage.vue'),
+        meta: { requiresAuth: true }
       },
 
       // demás que ya tienes
       {
         path: 'event/:id',
-        component: () => import('pages/EventDetailPage.vue')
+        component: () => import('pages/EventDetailPage.vue'),
+        meta: { requiresAuth: true }
       },
       {
         path: 'my-tickets',
         name: 'my-tickets',
-        component: () => import('pages/MyTickets.vue')
+        component: () => import('pages/MyTickets.vue'),
+        meta: { requiresAuth: true }
       },
       {
         path: '/my-tickets/:ticketId/invitations',
-        component: () => import('pages/InvitationsPage.vue')
+        component: () => import('pages/InvitationsPage.vue'),
+        meta: { requiresAuth: true }
       },
       {
         path: 'my-invitations',
         name: 'my-invitations',
-        component: () => import('pages/MyInvitationsPage.vue')
+        component: () => import('pages/MyInvitationsPage.vue'),
+        meta: { requiresAuth: true }
       },
       {
         path: 'ticket',
         name: 'ticket-detail',
-        component: () => import('pages/TicketDetail.vue')
+        component: () => import('pages/TicketDetail.vue'),
+        meta: { requiresAuth: true }
       },
       {
         path: 'configurations',
         name: 'configurations',
-        component: () => import('pages/Configurations.vue')
+        component: () => import('pages/Configurations.vue'),
+        meta: { requiresAuth: true }
       },
     ]
   }

@@ -1,5 +1,6 @@
 {
   "appId": "com.example.app",
   "appName": "youpass",
-  "webDir": "www"
+  "webDir": "dist/spa",
+  "bundledWebRuntime": false
 }
