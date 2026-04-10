@@ -8,7 +8,7 @@
         <q-icon name="arrow_back" size="18px" />
       </button>
 
-      <p class="eyebrow">Verificación · Paso 2 de 2</p>
+      <p class="eyebrow">Verificación</p>
       <h1 class="title">Código de<br /><span class="accent">verificación</span></h1>
       <p class="subtitle">
         Enviamos un SMS al número<br />
@@ -41,9 +41,13 @@
         </button>
       </div>
 
-      <button class="btn-next" :class="{ 'btn-next--on': otp.length === 6 }" @click="verify">
-        <span>Verificar</span>
-        <q-icon name="arrow_forward" size="16px" />
+      <button class="btn-next" :class="{ 'btn-next--on': otp.length === 6 }" :disabled="loading || otp.length !== 6"
+        @click="verify">
+        <q-spinner v-if="loading" size="18px" color="dark" :thickness="3" />
+        <template v-else>
+          <span>Verificar</span>
+          <q-icon name="arrow_forward" size="16px" />
+        </template>
       </button>
 
     </div>
@@ -63,6 +67,7 @@ const router = useRouter()
 
 const phone = route.query.phone
 const otp = ref('')
+const loading = ref(false)
 
 const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'del']
 
@@ -74,6 +79,9 @@ const pressKey = (key) => {
 
 const verify = async () => {
   if (otp.value.length !== 6) { alert('Código inválido'); return }
+  if (loading.value) return   // ← guard extra
+
+  loading.value = true
 
   try {
     const res = await api.post('/auth/verify-otp', { phone, code: otp.value })
@@ -99,6 +107,7 @@ const verify = async () => {
 
   } catch (e) {
     alert('Error: ' + (e?.response?.status || e?.message || JSON.stringify(e)))
+    loading.value = false
   }
 }
 </script>
@@ -249,6 +258,7 @@ const verify = async () => {
   padding-left: max(clamp(20px, 6vw, 32px), env(safe-area-inset-left));
   padding-right: max(clamp(20px, 6vw, 32px), env(safe-area-inset-right));
   gap: clamp(10px, 2.5vw, 14px);
+  justify-content: flex-end;
 }
 
 /* KEYPAD GRID */
@@ -374,5 +384,10 @@ const verify = async () => {
     max-width: 420px;
     margin: 0 auto;
   }
+}
+
+.btn-next:disabled {
+  pointer-events: none;
+  opacity: 0.85;   /* leve para que se note que está procesando */
 }
 </style>

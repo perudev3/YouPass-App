@@ -1,4 +1,13 @@
-// app global css in SCSS form
 .swal2-container {
   z-index: 999999 !important;
+}
+
+html, body {
+  height: 100%;
+  overscroll-behavior: none;  // ✅ evita el bounce, no bloquea scroll
+}
+
+#q-app {
+  height: 100dvh;
+  // ✅ sin overflow: hidden — Quasar maneja el scroll internamente
 }

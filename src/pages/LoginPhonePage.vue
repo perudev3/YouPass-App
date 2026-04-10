@@ -8,20 +8,14 @@
         <q-icon name="arrow_back" size="18px" />
       </button>
 
-      <p class="eyebrow">Verificación · Paso 1 de 2</p>
+      <p class="eyebrow">Verificación</p>
       <h1 class="title">Tu número<br /><span class="accent">de celular</span></h1>
       <p class="subtitle">Te enviaremos un código para confirmar que eres tú.</p>
 
       <!-- PHONE INPUT -->
       <div class="phone-card">
-        <q-select
-          v-model="selectedCountry"
-          :options="countries"
-          option-label="label"
-          dense
-          borderless
-          class="country-select"
-        >
+        <q-select v-model="selectedCountry" :options="countries" option-label="label" dense borderless
+          class="country-select">
           <template v-slot:option="scope">
             <q-item v-bind="scope.itemProps">
               <q-item-section avatar>
@@ -44,7 +38,7 @@
         <div class="vsep" />
 
         <div class="phone-display">
-          <span v-if="!phone" class="ph-placeholder">_ _ _  _ _ _  _ _ _</span>
+          <span v-if="!phone" class="ph-placeholder">_ _ _ _ _ _ _ _ _</span>
           <span v-else class="ph-value">{{ formattedPhone }}</span>
         </div>
       </div>
@@ -55,25 +49,20 @@
     <div class="zone-keypad">
 
       <div class="keypad">
-        <button
-          v-for="(key, i) in keys"
-          :key="i"
-          class="key"
-          :class="{ 'key--ghost': key === '', 'key--del': key === 'del' }"
-          @click="pressKey(key)"
-        >
+        <button v-for="(key, i) in keys" :key="i" class="key"
+          :class="{ 'key--ghost': key === '', 'key--del': key === 'del' }" @click="pressKey(key)">
           <q-icon v-if="key === 'del'" name="backspace" size="21px" />
           <span v-else-if="key">{{ key }}</span>
         </button>
       </div>
 
-      <button
-        class="btn-next"
-        :class="{ 'btn-next--on': phone.length >= 9 }"
-        @click="submit"
-      >
-        <span>Siguiente</span>
-        <q-icon name="arrow_forward" size="16px" />
+      <button class="btn-next" :class="{ 'btn-next--on': phone.length >= 9 }" :disabled="loading || phone.length < 9"
+        @click="submit">
+        <q-spinner v-if="loading" size="18px" color="dark" :thickness="3" />
+        <template v-else>
+          <span>Siguiente</span>
+          <q-icon name="arrow_forward" size="16px" />
+        </template>
       </button>
 
     </div>
@@ -87,20 +76,21 @@ import { ref, computed } from 'vue'
 import { api } from 'boot/axios'
 import { useRouter } from 'vue-router'
 
-const router  = useRouter()
-const phone   = ref('')
+const router = useRouter()
+const phone = ref('')
+const loading = ref(false)
 
 const countries = [
-  { name: 'Chile',     code: '56', flag: '🇨🇱', label: 'Chile' },
-  { name: 'Perú',      code: '51', flag: '🇵🇪', label: 'Perú' },
-  { name: 'México',    code: '52', flag: '🇲🇽', label: 'México' },
-  { name: 'Colombia',  code: '57', flag: '🇨🇴', label: 'Colombia' },
+  { name: 'Chile', code: '56', flag: '🇨🇱', label: 'Chile' },
+  { name: 'Perú', code: '51', flag: '🇵🇪', label: 'Perú' },
+  { name: 'México', code: '52', flag: '🇲🇽', label: 'México' },
+  { name: 'Colombia', code: '57', flag: '🇨🇴', label: 'Colombia' },
   { name: 'Argentina', code: '54', flag: '🇦🇷', label: 'Argentina' },
-  { name: 'España',    code: '34', flag: '🇪🇸', label: 'España' },
+  { name: 'España', code: '34', flag: '🇪🇸', label: 'España' },
 ]
 const selectedCountry = ref(countries[0])
 
-const keys = ['1','2','3','4','5','6','7','8','9','','0','del']
+const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'del']
 
 const pressKey = (key) => {
   if (key === 'del') { phone.value = phone.value.slice(0, -1); return }
@@ -116,6 +106,9 @@ const formattedPhone = computed(() =>
 
 const submit = async () => {
   if (phone.value.length < 9) { alert('Ingresa un número válido'); return }
+  if (loading.value) return
+
+  loading.value = true
   const fullPhone = selectedCountry.value.code + phone.value
   try {
     await api.post('/auth/send-otp', { phone: fullPhone })
@@ -124,6 +117,8 @@ const submit = async () => {
       ? `STATUS: ${err.response.status}\nDATA: ${JSON.stringify(err.response.data)}`
       : `ERROR: ${err.message}`)
     return
+  } finally {
+    loading.value = false   // ← siempre se resetea
   }
   router.push({ name: 'verify-otp', query: { phone: fullPhone } })
 }
@@ -155,7 +150,8 @@ const submit = async () => {
    ✅ flex-shrink: 1 → cede espacio en pantallas pequeñas
    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 .zone-header {
-  flex-shrink: 0;           /* No colapsa — tiene contenido mínimo necesario */
+  flex-shrink: 0;
+  /* No colapsa — tiene contenido mínimo necesario */
   padding: clamp(12px, 4vw, 24px) clamp(20px, 6vw, 32px) clamp(10px, 2.5vw, 18px);
   padding-top: max(clamp(12px, 4vw, 24px), env(safe-area-inset-top));
   padding-left: max(clamp(20px, 6vw, 32px), env(safe-area-inset-left));
@@ -177,7 +173,11 @@ const submit = async () => {
   margin-bottom: clamp(12px, 3vw, 22px);
   transition: background 0.15s, transform 0.1s;
 }
-.back-btn:active { background: #1e293b; transform: scale(0.92); }
+
+.back-btn:active {
+  background: #1e293b;
+  transform: scale(0.92);
+}
 
 /* EYEBROW */
 .eyebrow {
@@ -198,7 +198,10 @@ const submit = async () => {
   margin: 0 0 6px;
   color: #f8fafc;
 }
-.accent { color: #C9A24D; }
+
+.accent {
+  color: #C9A24D;
+}
 
 /* SUBTITLE */
 .subtitle {
@@ -220,19 +223,40 @@ const submit = async () => {
   padding: clamp(10px, 2.5vw, 15px) clamp(12px, 3.5vw, 18px);
 }
 
-.country-select { flex-shrink: 0; }
-.country-select :deep(.q-field__control)        { padding: 0; min-height: unset; }
-.country-select :deep(.q-field__native)         { padding: 0; }
+.country-select {
+  flex-shrink: 0;
+}
+
+.country-select :deep(.q-field__control) {
+  padding: 0;
+  min-height: unset;
+}
+
+.country-select :deep(.q-field__native) {
+  padding: 0;
+}
+
 .country-select :deep(.q-field__control:before),
-.country-select :deep(.q-field__control:after)  { border: none !important; }
+.country-select :deep(.q-field__control:after) {
+  border: none !important;
+}
 
 .selected-wrap {
   display: flex;
   align-items: center;
   gap: 5px;
 }
-.flag  { font-size: 19px; line-height: 1; }
-.ccode { font-size: 0.92rem; font-weight: 700; color: #e2e8f0; }
+
+.flag {
+  font-size: 19px;
+  line-height: 1;
+}
+
+.ccode {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #e2e8f0;
+}
 
 .vsep {
   width: 1px;
@@ -249,8 +273,14 @@ const submit = async () => {
   letter-spacing: 0.1em;
   font-variant-numeric: tabular-nums;
 }
-.ph-placeholder { color: #2a1f00; }
-.ph-value       { color: #f1f5f9; }
+
+.ph-placeholder {
+  color: #2a1f00;
+}
+
+.ph-value {
+  color: #f1f5f9;
+}
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    ZONE KEYPAD
@@ -263,7 +293,7 @@ const submit = async () => {
   display: flex;
   flex-direction: column;
   /* ✅ space-between: keypad arriba, botón pegado abajo */
-  justify-content: space-between;
+  justify-content: flex-end;
 
   padding: clamp(8px, 2vw, 16px) clamp(20px, 6vw, 32px) 0;
   padding-left: max(clamp(20px, 6vw, 32px), env(safe-area-inset-left));
@@ -280,10 +310,10 @@ const submit = async () => {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   /* ✅ CAMBIO CLAVE: 1fr en lugar de clamp fijo */
-  grid-template-rows: repeat(4, 1fr);
+  grid-template-rows: repeat(4, clamp(52px, 11vw, 66px));
   gap: clamp(6px, 1.8vw, 11px);
   /* ✅ El keypad ocupa el espacio disponible pero con un máximo sensato */
-  flex: 1;
+  /*flex: 1;*/
   /* Cap para tablets/desktop — en móvil ocupa lo necesario */
   max-height: min(65vh, 380px);
 }
@@ -302,20 +332,31 @@ const submit = async () => {
   cursor: pointer;
   user-select: none;
   /* ✅ Sin height explícita — la controla el grid */
-  min-height: 0;           /* ← necesario para que 1fr funcione en algunos browsers */
+  min-height: 0;
+  /* ← necesario para que 1fr funcione en algunos browsers */
   transition: background 0.1s, transform 0.1s;
 }
+
 .key:active:not(.key--ghost) {
   background: #1e293b;
   transform: scale(0.91);
 }
+
 .key--ghost {
   background: transparent;
   border-color: transparent;
   pointer-events: none;
 }
-.key--del { color: #475569; }
-.key--del:active { color: #f1f5f9; background: #1e293b; transform: scale(0.91); }
+
+.key--del {
+  color: #475569;
+}
+
+.key--del:active {
+  color: #f1f5f9;
+  background: #1e293b;
+  transform: scale(0.91);
+}
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    BOTÓN SIGUIENTE
@@ -343,15 +384,17 @@ const submit = async () => {
   margin-bottom: clamp(8px, 2.5vw, 16px);
   transition: background 0.2s, color 0.2s, box-shadow 0.2s, transform 0.1s;
 }
+
 .btn-next--on {
   background: #C9A24D;
   color: #020617;
   border-color: transparent;
-  box-shadow: 0 4px 22px rgba(201,162,77,0.30);
+  box-shadow: 0 4px 22px rgba(201, 162, 77, 0.30);
 }
+
 .btn-next--on:active {
   transform: scale(0.97);
-  box-shadow: 0 2px 10px rgba(201,162,77,0.15);
+  box-shadow: 0 2px 10px rgba(201, 162, 77, 0.15);
 }
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -361,26 +404,48 @@ const submit = async () => {
   background: #0f172a !important;
   border: 1px solid #1e293b !important;
   border-radius: 14px !important;
-  box-shadow: 0 12px 40px rgba(0,0,0,0.65) !important;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.65) !important;
 }
+
 :deep(.q-item) {
   color: #e2e8f0 !important;
   border-radius: 8px;
   margin: 3px 6px;
   font-size: 0.88rem;
 }
+
 :deep(.q-item:hover),
-:deep(.q-item--active) { background: #1e293b !important; }
+:deep(.q-item--active) {
+  background: #1e293b !important;
+}
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    LANDSCAPE — PANTALLAS PEQUEÑAS
    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 @media (orientation: landscape) and (max-height: 500px) {
-  .eyebrow, .subtitle { display: none; }
-  .title { font-size: 1.15rem; margin-bottom: 5px; }
-  .zone-header { padding-top: 10px; padding-bottom: 6px; }
-  .keypad { max-height: 55vh; }
-  .btn-next { height: 42px; }
+
+  .eyebrow,
+  .subtitle {
+    display: none;
+  }
+
+  .title {
+    font-size: 1.15rem;
+    margin-bottom: 5px;
+  }
+
+  .zone-header {
+    padding-top: 10px;
+    padding-bottom: 6px;
+  }
+
+  .keypad {
+    max-height: 55vh;
+  }
+
+  .btn-next {
+    height: 42px;
+  }
 }
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -391,5 +456,10 @@ const submit = async () => {
     max-width: 420px;
     margin: 0 auto;
   }
+}
+
+.btn-next:disabled {
+  pointer-events: none;
+  opacity: 0.85;   /* leve para que se note que está procesando */
 }
 </style>

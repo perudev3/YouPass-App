@@ -2,7 +2,7 @@
   <div class="welcome">
 
     <div class="logo-box">
-      <img src="/logo-sin-fondo.png" class="logo" />
+      <img src="/logo-2-sin-fondo.png" class="logo" />
     </div>
 
     <div class="buttons">
@@ -66,7 +66,7 @@ const goRegister = () => {
 
 /* LOGO */
 .logo {
-  width: 180px;
+  width: 390px;
   z-index: 2;
 
   animation: heartbeat 2.2s infinite ease-in-out;
@@ -94,6 +94,7 @@ const goRegister = () => {
   );
 
   animation: pulseWave 2.2s infinite ease-out;
+  top:100px;
 }
 
 /* BOTONES */
