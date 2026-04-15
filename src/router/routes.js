@@ -78,6 +78,11 @@ const routes = [
         component: () => import('pages/Configurations.vue'),
         meta: { requiresAuth: true }
       },
+      {
+        path: 'my-barpurchases',
+        name: 'my-barpurchases',
+        component: () => import('pages/Mybarpurchases.vue'),
+      }
     ]
   }
 ]
