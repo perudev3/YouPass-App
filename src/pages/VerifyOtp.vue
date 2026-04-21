@@ -59,8 +59,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { api } from 'boot/axios'
-import { Preferences } from '@capacitor/preferences'
+import { api, Storage, setToken } from 'boot/axios'
 
 const route = useRoute()
 const router = useRouter()
@@ -79,7 +78,7 @@ const pressKey = (key) => {
 
 const verify = async () => {
   if (otp.value.length !== 6) { alert('Código inválido'); return }
-  if (loading.value) return   // ← guard extra
+  if (loading.value) return
 
   loading.value = true
 
@@ -87,22 +86,22 @@ const verify = async () => {
     const res = await api.post('/auth/verify-otp', { phone, code: otp.value })
 
     if (res.data.token) {
-      await Preferences.set({
-        key: 'token',
-        value: res.data.token
-      })
-
-      await Preferences.set({
-        key: 'user',
-        value: JSON.stringify(res.data.user)
-      })
-      window.dispatchEvent(new Event('auth-changed'))
+      await Storage.set('token', res.data.token)
+      await Storage.set('user', JSON.stringify(res.data.user))
+      setToken(res.data.token)
     }
 
     if (res.data.needs_profile) {
       router.push('/register-profile')
     } else {
       router.replace('/home')
+    }
+
+    // ✅ Dispara DESPUÉS de la navegación, cuando MainLayout ya está montado
+    if (res.data.token) {
+      setTimeout(() => {
+        window.dispatchEvent(new Event('auth-changed'))
+      }, 100)
     }
 
   } catch (e) {
@@ -388,6 +387,7 @@ const verify = async () => {
 
 .btn-next:disabled {
   pointer-events: none;
-  opacity: 0.85;   /* leve para que se note que está procesando */
+  opacity: 0.85;
+  /* leve para que se note que está procesando */
 }
 </style>

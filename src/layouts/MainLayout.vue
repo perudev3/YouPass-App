@@ -1,27 +1,22 @@
 <template>
   <q-layout view="hHh Lpr lFf">
 
-    <!-- HEADER -->
     <q-header v-if="!$route.meta.hideHeader" class="top-bar" elevated>
       <q-toolbar class="toolbar-inner">
-
         <q-btn flat round icon="menu" color="white" @click="leftDrawerOpen = true" />
-
         <div class="row items-center q-gutter-sm">
           <div v-if="isAuthenticated" class="fiesta-switch-container row items-center q-gutter-xs"
             :class="{ 'fiesta-active': modoFiesta }">
-            <q-toggle :model-value="modoFiesta" :disable="loadingAuth" color="amber" keep-color icon="celebration"
+            <q-toggle :model-value="modoFiesta" color="amber" keep-color icon="celebration"
               @update:model-value="toggleModoFiesta" />
             <span class="fiesta-label" :class="{ 'fiesta-label--active': modoFiesta }">
               {{ modoFiesta ? '🎉 Modo Fiesta' : 'Modo Fiesta' }}
             </span>
           </div>
         </div>
-
       </q-toolbar>
     </q-header>
 
-    <!-- DRAWER -->
     <q-drawer v-model="leftDrawerOpen" side="left" bordered class="drawer">
 
       <div v-if="isAuthenticated" class="drawer-header row items-center q-gutter-sm">
@@ -34,17 +29,14 @@
 
       <q-list padding>
         <template v-if="isScanner">
-
           <q-item clickable to="/home">
             <q-item-section avatar><q-icon name="home" /></q-item-section>
             <q-item-section>Inicio</q-item-section>
           </q-item>
-
           <q-item clickable @click="logout">
             <q-item-section avatar><q-icon name="logout" /></q-item-section>
             <q-item-section>Cerrar Sesión</q-item-section>
           </q-item>
-
         </template>
         <template v-else>
           <q-item clickable to="/home">
@@ -75,7 +67,6 @@
         </template>
       </q-list>
 
-
       <div class="q-pa-md text-center">
         <img src="/logo-2-sin-fondo.png" width="120" />
       </div>
@@ -92,111 +83,95 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { api, Storage } from 'boot/axios'
+import { api, Storage, setToken, clearToken } from 'boot/axios'
 import Swal from 'sweetalert2'
 import { Capacitor } from '@capacitor/core'
 
 const leftDrawerOpen = ref(false)
 const router = useRouter()
 
-const token = ref(null)
 const user = ref(null)
-const loadingAuth = ref(true)
 const modoFiesta = ref(false)
-
 const userRole = ref('cliente')
 
 let fiestaInterval = null
 
-const syncModoFiesta = async () => {
-  // ⛔ NO ejecutar si no hay usuario o token
-  if (!token.value || !user.value) return
-
-  try {
-    const res = await api.get('/auth/me')
-    const serverState = !!res.data.user?.mood_partty
-
-    if (modoFiesta.value !== serverState) {
-      modoFiesta.value = serverState
-      await Storage.set('modoFiesta', serverState ? 'true' : 'false')
-    }
-
-  } catch (e) {
-    // 🔥 si es 401 → limpiar sesión
-    if (e.response?.status === 401) {
-      await logout()
-    } else {
-      console.error('Error sync modo fiesta', e)
-    }
-  }
-}
+// ── COMPUTED ───────────────────────────────────────────────
+const isAuthenticated = computed(() => !!user.value)
 
 const isScanner = computed(() =>
-  userRole.value === 'scanner_puerta' ||
-  userRole.value === 'scanner_barra'
+  userRole.value === 'scanner_puerta' || userRole.value === 'scanner_barra'
 )
 
-
-const loadRole = async () => {
-  if (!token.value) return
-
-  try {
-    const res = await api.get('/auth/my-role', {
-      params: { event_id: 1 } // dinámico luego
-    })
-
-    console.log('ROLE RESPONSE 👉', res.data)
-
-    userRole.value = res.data.role
-  } catch (e) {
-    userRole.value = 'cliente'
-    console.error(e)
+const profileIcon = computed(() => {
+  if (!user.value?.gender) return 'account_circle'
+  switch (user.value.gender) {
+    case 'Hombre': return 'male'
+    case 'Mujer': return 'female'
+    default: return 'person'
   }
-}
+})
 
 // ── AUTH ────────────────────────────────────────────────────
-const loadToken = async () => {
-  token.value = await Storage.get('token')
+const loadRole = async () => {
+  try {
+    const res = await api.get('/auth/my-role', { params: { event_id: 1 } })
+    userRole.value = res.data.role
+  } catch {
+    userRole.value = 'cliente'
+  }
 }
 
 const loadUser = async () => {
-  if (!token.value) {
-    user.value = null
-    loadingAuth.value = false
-    return
-  }
   try {
+    console.log('loadUser: haciendo request...')
     const res = await api.get('/auth/me')
+    console.log('loadUser: OK, user=', res.data.user?.name)
     user.value = res.data.user
-    // Sincronizar modoFiesta desde el estado del usuario en el servidor
     modoFiesta.value = !!user.value?.mood_partty
-    // Persistir en Storage para que IndexPage lo lea
-    await Storage.set('modoFiesta', modoFiesta.value)
+    await Storage.set('modoFiesta', modoFiesta.value ? 'true' : 'false')
   } catch (error) {
+    console.log('loadUser: ERROR status=', error.response?.status, 'msg=', error.message)
     if (error.response?.status === 401) {
       await Storage.remove('token')
       await Storage.remove('user')
-      token.value = null
+      clearToken()
       user.value = null
     }
-  } finally {
-    loadingAuth.value = false
   }
 }
+
+
 
 const logout = async () => {
   await Storage.remove('token')
   await Storage.remove('user')
   await Storage.remove('modoFiesta')
+  clearToken()
   user.value = null
-  token.value = null
   modoFiesta.value = false
-  window.dispatchEvent(new Event('auth-changed'))
+  userRole.value = 'cliente'
   if (fiestaInterval) {
     clearInterval(fiestaInterval)
     fiestaInterval = null
   }
+  window.dispatchEvent(new Event('auth-changed'))
   router.replace('/')
+}
+
+// ── SYNC MODO FIESTA ───────────────────────────────────────
+const syncModoFiesta = async () => {
+  if (!user.value) return
+  try {
+    const res = await api.get('/auth/me')
+    const serverState = !!res.data.user?.mood_partty
+    if (modoFiesta.value !== serverState) {
+      modoFiesta.value = serverState
+      await Storage.set('modoFiesta', serverState ? 'true' : 'false')
+    }
+  } catch (e) {
+    if (e.response?.status === 401) await logout()
+  }
 }
 
 // ── MODO FIESTA ────────────────────────────────────────────
@@ -248,39 +223,30 @@ const toggleModoFiesta = async (val) => {
     if (user.value) user.value.mood_partty = 0
     await Storage.set('modoFiesta', 'false')
     window.dispatchEvent(new CustomEvent('modo-fiesta-changed', { detail: false }))
-  } catch (error) {
-    console.error('Error desactivando mood:', error)
+  } catch {
     modoFiesta.value = true
   }
 }
 
-// ── COMPUTED ───────────────────────────────────────────────
-const isAuthenticated = computed(() => {
-  if (loadingAuth.value) return true
-  return !!user.value
-})
-
-const profileIcon = computed(() => {
-  if (!user.value?.gender) return 'account_circle'
-  switch (user.value.gender) {
-    case 'Hombre': return 'male'
-    case 'Mujer': return 'female'
-    default: return 'person'
-  }
-})
-
 // ── LIFECYCLE ──────────────────────────────────────────────
 const handleAuthChange = async () => {
-  await loadToken()
+  const tokenValue = await Storage.get('token')
+  if (!tokenValue) {
+    user.value = null
+    return
+  }
+  setToken(tokenValue)
   await loadUser()
-
-  // reiniciar sync si hay sesión
-  if (token.value && !fiestaInterval) {
+  await loadRole()
+  if (!fiestaInterval) {
     fiestaInterval = setInterval(syncModoFiesta, 10000)
   }
 }
 
 onMounted(async () => {
+  // Listener primero siempre
+  window.addEventListener('auth-changed', handleAuthChange)
+
   if (Capacitor.isNativePlatform()) {
     const { StatusBar, Style } = await import('@capacitor/status-bar')
     await StatusBar.setStyle({ style: Style.Dark })
@@ -288,23 +254,24 @@ onMounted(async () => {
     await StatusBar.setOverlaysWebView({ overlay: true })
   }
 
-  await loadToken()
-  await loadUser()
-  await loadRole()
-
-  if (token.value) {
-    fiestaInterval = setInterval(syncModoFiesta, 10000)
+  // El token ya está en _token gracias al boot
+  // Solo verificamos si hay sesión activa y cargamos el usuario
+  const tokenValue = await Storage.get('token')
+  if (tokenValue) {
+    // setToken no es necesario, el boot ya lo hizo
+    // pero lo llamamos por si acaso el boot corrió antes que Preferences
+    setToken(tokenValue)
+    await loadUser()
+    await loadRole()
+    if (!fiestaInterval) {
+      fiestaInterval = setInterval(syncModoFiesta, 10000)
+    }
   }
-
-  window.addEventListener('auth-changed', handleAuthChange)
 })
 
 onUnmounted(() => {
   window.removeEventListener('auth-changed', handleAuthChange)
-
-  if (fiestaInterval) {
-    clearInterval(fiestaInterval)
-  }
+  if (fiestaInterval) clearInterval(fiestaInterval)
 })
 </script>
 
@@ -365,12 +332,6 @@ onUnmounted(() => {
   border: 1px solid transparent;
 }
 
-/* .fiesta-switch-container.fiesta-active {
-  background: rgba(255, 194, 32, 0.08);
-  border-color: rgba(255, 194, 32, 0.3);
-  box-shadow: 0 0 16px rgba(255, 194, 32, 0.15);
-  animation: fiesta-pulse 2s ease-in-out infinite;
-} */
 @keyframes fiesta-pulse {
 
   0%,
